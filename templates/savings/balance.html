@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>My Savings</h2>
+
+    <div class="card mt-3 mb-4">
+
+        <div class="card-body">
+
+            <h5>Current Savings Balance</h5>
+
+            <h2>
+                RWF {{ balance|floatformat:2 }}
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <h5>Savings Transactions</h5>
+
+            <table class="table table-bordered">
+
+                <thead>
+
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Reference</th>
+                        <th>Description</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for transaction in transactions %}
+
+                    <tr>
+
+                        <td>
+                            {{ transaction.transaction_date|date:"d/m/Y H:i" }}
+                        </td>
+
+                        <td>
+                            {{ transaction.get_transaction_type_display }}
+                        </td>
+
+                        <td>
+                            RWF {{ transaction.amount }}
+                        </td>
+
+                        <td>
+                            {{ transaction.reference }}
+                        </td>
+
+                        <td>
+                            {{ transaction.description }}
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="5">
+                            No savings transactions found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile - Smart Saving Group
+{% endblock %}
+
+{% block page_title %}
+My Profile
+{% endblock %}
+
+{% block page_subtitle %}
+View and manage your personal information
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-0">
+
+    <!-- ================================================== -->
+    <!-- PROFILE HEADER -->
+    <!-- ================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="row align-items-center">
+
+                <!-- Avatar -->
+                <div class="col-md-2 text-center">
+
+                    <div class="ssg-profile-avatar mx-auto">
+
+                        {% if member.user.first_name %}
+                            {{ member.user.first_name|first|upper }}
+                        {% else %}
+                            {{ member.user.username|first|upper }}
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Name -->
+                <div class="col-md-7">
+
+                    <h3 class="fw-bold mb-1">
+
+                        {{ member.user.get_full_name }}
+
+                    </h3>
+
+                    <p class="text-muted mb-2">
+
+                        <i class="fa-solid fa-id-card me-2"></i>
+
+                        {{ member.member_number }}
+
+                    </p>
+
+                    <span class="badge bg-success">
+
+                        {{ member.status }}
+
+                    </span>
+
+                    <span class="badge bg-primary ms-2">
+
+                        {{ role }}
+
+                    </span>
+
+                </div>
+
+
+                <!-- Actions -->
+                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+
+                    <a
+                        href="{% url 'edit_profile' %}"
+                        class="btn btn-primary mb-2"
+                    >
+
+                        <i class="fa-solid fa-pen-to-square me-2"></i>
+
+                        Edit Profile
+
+                    </a>
+
+                    <br>
+
+                    <a
+                        href="{% url 'change_password' %}"
+                        class="btn btn-outline-secondary"
+                    >
+
+                        <i class="fa-solid fa-key me-2"></i>
+
+                        Change Password
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- PERSONAL INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+
+            <h5 class="fw-bold mb-0">
+
+                <i class="fa-solid fa-user me-2 text-primary"></i>
+
+                Personal Information
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                <!-- Full Name -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Full Name
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.user.get_full_name|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <!-- Member ID -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Member's ID
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.member_number }}
+                    </div>
+
+                </div>
+
+
+                <!-- Username -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Username
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.user.username }}
+                    </div>
+
+                </div>
+
+
+                <!-- Shares -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Number of Shares
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.shares }}
+
+                        <span class="text-muted">
+                            share{{ member.shares|pluralize }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Email -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Email
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.user.email|default:"Not provided" }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Phone -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Phone
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.phone|default:"Not provided" }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- National ID -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        National ID
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {% if member.national_id %}
+                            {{ member.national_id }}
+                        {% else %}
+                            Not provided
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Date of Birth -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Date of Birth
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {% if member.date_of_birth %}
+                            {{ member.date_of_birth|date:"d M Y" }}
+                        {% else %}
+                            Not provided
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Joined Date -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Joined Date
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.joined_date|date:"d M Y" }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Membership Status -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Membership Status
+                    </small>
+
+                    <div>
+
+                        {% if member.status == "ACTIVE" %}
+
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+
+                        {% elif member.status == "SUSPENDED" %}
+
+                            <span class="badge bg-danger">
+                                Suspended
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Role -->
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Role
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ role }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- ADDRESS -->
+    <!-- ================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+
+            <h5 class="fw-bold mb-0">
+
+                <i class="fa-solid fa-location-dot me-2 text-primary"></i>
+
+                Address
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Country
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.country|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Province
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.province|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        District
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.district|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Sector
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.sector|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Cell
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.cell|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Village
+                    </small>
+
+                    <div class="fw-semibold">
+                        {{ member.village|default:"Not provided" }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- NEXT OF KIN -->
+    <!-- ================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+
+            <h5 class="fw-bold mb-0">
+
+                <i class="fa-solid fa-people-arrows me-2 text-primary"></i>
+
+                Next of Kin
+
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Full Names
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.next_of_kin_name|default:"Not provided" }}
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Phone
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.next_of_kin_phone|default:"Not provided" }}
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <small class="text-muted">
+                        Relationship
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        {{ member.next_of_kin_relationship|default:"Not provided" }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- PROFILE ACTIONS -->
+    <!-- ================================================== -->
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+
+        <a
+            href="{% url 'edit_profile' %}"
+            class="btn btn-primary"
+        >
+
+            <i class="fa-solid fa-user-pen me-2"></i>
+
+            Edit Profile
+
+        </a>
+
+
+        <a
+            href="{% url 'change_password' %}"
+            class="btn btn-outline-dark"
+        >
+
+            <i class="fa-solid fa-lock me-2"></i>
+
+            Change Password
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

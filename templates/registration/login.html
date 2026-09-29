@@ -1,0 +1,337 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - Smart Saving Group</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* =========================
+           LEFT SIDE
+           ========================= */
+
+        .login-left {
+            width: 50%;
+            min-height: 100vh;
+            background: #164a96;
+            color: white;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            text-align: center;
+            padding: 40px;
+        }
+
+        .login-logo {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 25px;
+        }
+
+        .login-left h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .login-left p {
+            margin-top: 10px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+
+        /* =========================
+           RIGHT SIDE
+           ========================= */
+
+        .login-right {
+            width: 50%;
+            min-height: 100vh;
+            background: #ffffff;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 40px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-box h2 {
+            margin-bottom: 8px;
+            color: #164a96;
+            font-size: 30px;
+        }
+
+        .login-subtitle {
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+
+        /* =========================
+           FORM
+           ========================= */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px 15px;
+
+            border: 1px solid #d5dbe3;
+            border-radius: 7px;
+
+            font-size: 15px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #164a96;
+            box-shadow: 0 0 0 3px rgba(22, 74, 150, 0.10);
+        }
+
+
+        /* =========================
+           LOGIN BUTTON
+           ========================= */
+
+        .login-button {
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 7px;
+
+            background: #164a96;
+            color: white;
+
+            font-size: 16px;
+            font-weight: 600;
+
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .login-button:hover {
+            background: #103b79;
+        }
+
+
+        /* =========================
+           ERROR
+           ========================= */
+
+        .error-message {
+            background: #f8d7da;
+            color: #842029;
+
+            padding: 12px 15px;
+            border-radius: 7px;
+
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           MOBILE
+           ========================= */
+
+        @media (max-width: 768px) {
+
+            .login-page {
+                flex-direction: column;
+            }
+
+            .login-left,
+            .login-right {
+                width: 100%;
+            }
+
+            .login-left {
+                min-height: 40vh;
+                padding: 30px 20px;
+            }
+
+            .login-logo {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 15px;
+            }
+
+            .login-left h1 {
+                font-size: 25px;
+            }
+
+            .login-right {
+                min-height: 60vh;
+                padding: 30px 20px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="login-page">
+
+    <!-- =========================
+         LEFT SIDE
+         ========================= -->
+
+    <div class="login-left">
+
+        <img
+            src="{% static 'images/logo.png' %}"
+            alt="Smart Saving Group Logo"
+            class="login-logo"
+        >
+
+        <h1>
+            Smart Saving Group
+        </h1>
+
+        <p>
+            Save • Grow • Prosper
+        </p>
+
+    </div>
+
+
+    <!-- =========================
+         RIGHT SIDE
+         ========================= -->
+
+    <div class="login-right">
+
+        <div class="login-box">
+
+            <h2>
+                <i>Sign in here</i>
+            </h2>
+
+            <div class="login-subtitle">
+                Login to your Smart Saving Group account
+            </div>
+
+
+            {% if form.errors %}
+
+                <div class="error-message">
+                    Invalid username or password.
+                </div>
+
+            {% endif %}
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+                <!-- Username -->
+
+                <div class="form-group">
+
+                    <label for="id_username">
+                        Username
+                    </label>
+
+                    <input
+                        type="text"
+                        name="username"
+                        id="id_username"
+                        placeholder="Enter your username"
+                        required
+                        autofocus
+                    >
+
+                </div>
+
+
+                <!-- Password -->
+
+                <div class="form-group">
+
+                    <label for="id_password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        name="password"
+                        id="id_password"
+                        placeholder="Enter your password"
+                        required
+                    >
+
+                </div>
+
+
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ next }}"
+                >
+
+
+                <!-- Login -->
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    Login
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

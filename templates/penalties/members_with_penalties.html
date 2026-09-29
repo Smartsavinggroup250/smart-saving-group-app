@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="ssg-page-title">
+    Members with Penalties
+</div>
+
+<p class="text-white mb-4">
+    List of members who have penalties.
+</p>
+
+<div class="ssg-card">
+
+    <div class="ssg-card-header">
+        <h3>Members with Penalties</h3>
+    </div>
+
+    <div class="ssg-card-body">
+
+        {% if penalties %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Member Number</th>
+                        <th>Amount</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for penalty in penalties %}
+
+                    <tr>
+
+                        <td>
+                            {{ penalty.member.user.get_full_name }}
+                        </td>
+
+                        <td>
+                            {{ penalty.member.member_number }}
+                        </td>
+
+                        <td>
+                            {{ penalty.amount }} RWF
+                        </td>
+
+                        <td>
+                            {{ penalty.reason }}
+                        </td>
+
+                        <td>
+                            {{ penalty.issued_at|date:"d M Y H:i" }}
+                        </td>
+
+                        <td>
+
+                            {% if penalty.status == "PAID" %}
+
+                                <span class="badge bg-success">
+                                    Paid
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Pending
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Pagination -->
+
+        {% if page_obj.paginator.num_pages > 1 %}
+
+        <nav aria-label="Members with penalties pagination">
+
+            <ul class="pagination justify-content-center mt-4">
+
+                <!-- Previous -->
+
+                {% if page_obj.has_previous %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}"
+                    >
+                        Previous
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Previous
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+
+                <!-- Page numbers -->
+
+                {% for num in page_obj.paginator.page_range %}
+
+                    {% if page_obj.number == num %}
+
+                    <li class="page-item active">
+
+                        <span class="page-link">
+                            {{ num }}
+                        </span>
+
+                    </li>
+
+                    {% else %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ num }}"
+                        >
+                            {{ num }}
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <!-- Next -->
+
+                {% if page_obj.has_next %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.next_page_number }}"
+                    >
+                        Next
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Next
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+        {% endif %}
+
+
+        {% else %}
+
+        <div class="text-center py-4">
+
+            <p class="mb-0">
+                No members with penalties found.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

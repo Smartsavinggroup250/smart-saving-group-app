@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h4>Pay Penalty</h4>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="alert alert-warning">
+
+                        <strong>Penalty:</strong>
+                        {{ penalty.amount|floatformat:2 }} RWF
+
+                        <br>
+
+                        <strong>Shares:</strong>
+                        {{ penalty.number_of_shares }}
+
+                        <br>
+
+                        <strong>Reason:</strong>
+                        {{ penalty.reason }}
+
+                    </div>
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Amount
+                            </label>
+
+                            {{ form.amount }}
+
+                            {% if form.amount.errors %}
+                                <div class="text-danger">
+                                    {{ form.amount.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Payment Method
+                            </label>
+
+                            {{ form.payment_method }}
+
+                            {% if form.payment_method.errors %}
+                                <div class="text-danger">
+                                    {{ form.payment_method.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Payment Reference
+                            </label>
+
+                            {{ form.reference }}
+
+                            {% if form.reference.errors %}
+                                <div class="text-danger">
+                                    {{ form.reference.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Submit Payment
+                        </button>
+
+                        <a
+                            href="{% url 'penalty_list' %}"
+                            class="btn btn-secondary"
+                        >
+                            Cancel
+                        </a>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

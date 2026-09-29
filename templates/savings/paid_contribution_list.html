@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="ssg-page-title">Paid Contributions</div>
+
+<p class="text-white mb-4">
+    List of members whose contributions have been approved.
+</p>
+
+<div class="ssg-card">
+
+    <div class="ssg-card-header">
+        <h3>Paid Contributions</h3>
+    </div>
+
+    <div class="ssg-card-body">
+
+        {% if contributions %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Member Number</th>
+                        <th>Amount</th>
+                        <th>Month</th>
+                        <th>Approved Date</th>
+                        <th>Approved By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for contribution in contributions %}
+
+                    <tr>
+
+                        <td>
+                            {{ contribution.member.user.get_full_name }}
+                        </td>
+
+                        <td>
+                            {{ contribution.member.member_number }}
+                        </td>
+
+                        <td>
+                            {{ contribution.amount }} RWF
+                        </td>
+
+                        <td>
+                            {{ contribution.month|date:"F Y" }}
+                        </td>
+
+                        <td>
+                            {{ contribution.approved_at|date:"d M Y H:i" }}
+                        </td>
+
+                        <td>
+
+                            {% if contribution.approved_by %}
+
+                                {{ contribution.approved_by.get_full_name }}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-success">
+                                Approved
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Pagination -->
+
+        {% if page_obj.paginator.num_pages > 1 %}
+
+        <nav aria-label="Paid contributions pagination">
+
+            <ul class="pagination justify-content-center mt-4">
+
+                <!-- Previous -->
+
+                {% if page_obj.has_previous %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}"
+                    >
+                        Previous
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Previous
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+
+                <!-- Page numbers -->
+
+                {% for num in page_obj.paginator.page_range %}
+
+                    {% if page_obj.number == num %}
+
+                    <li class="page-item active">
+
+                        <span class="page-link">
+                            {{ num }}
+                        </span>
+
+                    </li>
+
+                    {% else %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ num }}"
+                        >
+                            {{ num }}
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <!-- Next -->
+
+                {% if page_obj.has_next %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.next_page_number }}"
+                    >
+                        Next
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Next
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+        {% endif %}
+
+
+        {% else %}
+
+        <div class="text-center py-4">
+
+            <p class="mb-0">
+                No paid contributions found.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

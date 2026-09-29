@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <h2>My Contributions</h2>
+
+        <a
+            href="{% url 'contribution_create' %}"
+            class="btn btn-primary"
+        >
+            New Contribution
+        </a>
+
+    </div>
+
+    <div class="card mt-3">
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for contribution in contributions %}
+
+                    <tr>
+
+                        <td>
+                            {{ contribution.month|date:"F Y" }}
+                        </td>
+
+                        <td>
+                            {{ contribution.amount }}
+                        </td>
+
+                        <td>
+                            {{ contribution.get_payment_method_display }}
+                        </td>
+
+                        <td>
+                            {{ contribution.reference|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ contribution.get_status_display }}
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="5">
+                            No contributions found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

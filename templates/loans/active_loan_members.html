@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="ssg-page-title">
+    Active Loans
+</div>
+
+<p class="text-white mb-4">
+    List of members with active loans.
+</p>
+
+<div class="ssg-card">
+
+    <div class="ssg-card-header">
+        <h3>Active Loans</h3>
+    </div>
+
+    <div class="ssg-card-body">
+
+        {% if loans %}
+
+        <div class="table-responsive">
+
+            <table class="table table-dark table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Member Number</th>
+                        <th>Loan Amount</th>
+                        <th>Interest</th>
+                        <th>Total Payable</th>
+                        <th>Amount Repaid</th>
+                        <th>Remaining Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for loan in loans %}
+
+                    <tr>
+
+                        <td>
+                            {{ loan.member.user.get_full_name }}
+                        </td>
+
+                        <td>
+                            {{ loan.member.member_number }}
+                        </td>
+
+                        <td>
+                            {{ loan.principal_amount|floatformat:2 }} RWF
+                        </td>
+
+                        <td>
+                            {{ loan.total_interest|floatformat:2 }} RWF
+                        </td>
+
+                        <td>
+                            {{ loan.total_payable|floatformat:2 }} RWF
+                        </td>
+
+                        <td>
+                            {{ loan.total_repaid|floatformat:2 }} RWF
+                        </td>
+
+                        <td>
+                            {{ loan.remaining_balance|floatformat:2 }} RWF
+                        </td>
+
+                        <td>
+
+                            {% if loan.status == "DISBURSED" %}
+
+                                <span class="badge bg-success">
+                                    Disbursed
+                                </span>
+
+                            {% elif loan.status == "APPROVED" %}
+
+                                <span class="badge bg-primary">
+                                    Approved
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    {{ loan.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Pagination -->
+
+        {% if page_obj.paginator.num_pages > 1 %}
+
+        <nav aria-label="Active loans pagination">
+
+            <ul class="pagination justify-content-center mt-4">
+
+                <!-- Previous -->
+
+                {% if page_obj.has_previous %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}"
+                    >
+                        Previous
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Previous
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+
+                <!-- Page Numbers -->
+
+                {% for num in page_obj.paginator.page_range %}
+
+                    {% if page_obj.number == num %}
+
+                    <li class="page-item active">
+
+                        <span class="page-link">
+                            {{ num }}
+                        </span>
+
+                    </li>
+
+                    {% else %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ num }}"
+                        >
+                            {{ num }}
+                        </a>
+
+                    </li>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <!-- Next -->
+
+                {% if page_obj.has_next %}
+
+                <li class="page-item">
+
+                    <a
+                        class="page-link"
+                        href="?page={{ page_obj.next_page_number }}"
+                    >
+                        Next
+                    </a>
+
+                </li>
+
+                {% else %}
+
+                <li class="page-item disabled">
+
+                    <span class="page-link">
+                        Next
+                    </span>
+
+                </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+        {% endif %}
+
+
+        {% else %}
+
+        <div class="text-center py-4">
+
+            <p class="mb-0">
+                No active loans found.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

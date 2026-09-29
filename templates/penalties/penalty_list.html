@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 style="color: #FFD700;">My Penalties</h2>
+
+    <div class="card mt-3">
+
+        <div class="card-body">
+
+            {% if penalties %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered table-striped">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Shares</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for penalty in penalties %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ penalty.issued_at|date:"d/m/Y" }}
+                                    </td>
+
+                                    <td>
+                                        {{ penalty.number_of_shares }}
+                                    </td>
+
+                                    <td>
+                                        {{ penalty.amount|floatformat:2 }} RWF
+                                    </td>
+
+                                    <td>
+                                        {{ penalty.reason }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if penalty.status == "PENDING" %}
+                                            <span class="badge bg-warning">
+                                                Pending
+                                            </span>
+
+                                        {% elif penalty.status == "PAID" %}
+                                            <span class="badge bg-success">
+                                                Paid
+                                            </span>
+
+                                        {% elif penalty.status == "APPROVED" %}
+                                            <span class="badge bg-info">
+                                                Approved
+                                            </span>
+
+                                        {% elif penalty.status == "WAIVED" %}
+                                            <span class="badge bg-secondary">
+                                                Waived
+                                            </span>
+
+                                        {% elif penalty.status == "REJECTED" %}
+                                            <span class="badge bg-danger">
+                                                Rejected
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+
+                                        {% if penalty.status == "PENDING" %}
+
+                                            <a
+                                                href="{% url 'penalty_pay' penalty.id %}"
+                                                class="btn btn-sm btn-primary"
+                                            >
+                                                Pay Penalty
+                                            </a>
+
+                                        {% elif penalty.status == "PAID" %}
+
+                                            <span class="text-success">
+                                                Paid
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p class="text-muted">
+                    You currently have no penalties.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

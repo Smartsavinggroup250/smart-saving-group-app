@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 style="color: #FFD700;">My Loan Repayments</h3>
+            <p class="text-muted mb-0">
+                <h6 style="color: #FFD700;"><i>View your loan repayment history.</i></h6>
+            </p>
+        </div>
+
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            {% if repayments %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-hover">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Loan</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Reference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for repayment in repayments %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ repayment.payment_date|date:"d/m/Y H:i" }}
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.loan.get_loan_type_display }}
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.amount|floatformat:2 }}
+                                        RWF
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.get_payment_method_display }}
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.reference }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if repayment.status == "APPROVED" %}
+
+                                            <span class="badge bg-success">
+                                                Approved
+                                            </span>
+
+                                        {% elif repayment.status == "PENDING" %}
+
+                                            <span class="badge bg-warning text-dark">
+                                                Pending
+                                            </span>
+
+                                        {% elif repayment.status == "REJECTED" %}
+
+                                            <span class="badge bg-danger">
+                                                Rejected
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-secondary">
+                                                {{ repayment.get_status_display }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-info mb-0">
+                    You have not made any loan repayments yet.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

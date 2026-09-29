@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Apply for a Loan</h2>
+
+    <div class="alert alert-info mt-3">
+
+        <strong>Loan Categories</strong>
+
+        <ul class="mb-0 mt-2">
+            <li>Gold Loan: up to 100,000 RWF</li>
+            <li>Platinum Loan: 100,001 – 300,000 RWF</li>
+            <li>Titanium Loan: above 300,000 RWF</li>
+        </ul>
+
+    </div>
+
+    <div class="card mt-3">
+
+        <div class="card-body">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Submit Loan Application
+                </button>
+
+                <a
+                    href="{% url 'loan_list' %}"
+                    class="btn btn-secondary"
+                >
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

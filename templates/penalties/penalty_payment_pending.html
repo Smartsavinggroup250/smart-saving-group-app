@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}
+Pending Penalty Payments - Smart Saving Group
+{% endblock %}
+
+
+{% block content %}
+
+<div class="ssg-card">
+
+    <div class="ssg-card-header">
+
+        <div style="font-size: 38px;">
+            💰
+        </div>
+
+        <div>
+            <h2>
+                Pending Penalty Payments
+            </h2>
+
+            <small>
+                Review and approve member penalty payments
+            </small>
+        </div>
+
+    </div>
+
+
+    <div class="ssg-card-body">
+
+        {% if payments %}
+
+            <div class="ssg-table-wrapper">
+
+                <table class="ssg-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Member</th>
+
+                            <th>Shares</th>
+
+                            <th>Penalty</th>
+
+                            <th>Amount</th>
+
+                            <th>Payment Method</th>
+
+                            <th>Reference</th>
+
+                            <th>Date</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for payment in payments %}
+
+                        <tr>
+
+                            <td>
+                                {{ payment.member.member_number }}
+                                -
+                                {{ payment.member.user.get_full_name }}
+                            </td>
+
+                            <td>
+                                {{ payment.penalty.number_of_shares }}
+                            </td>
+
+                            <td>
+                                {{ payment.penalty.amount|floatformat:2 }}
+                                RWF
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ payment.amount|floatformat:2 }}
+                                    RWF
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ payment.get_payment_method_display }}
+                            </td>
+
+                            <td>
+                                {{ payment.reference }}
+                            </td>
+
+                            <td>
+                                {{ payment.payment_date|date:"d/m/Y H:i" }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'penalty_payment_approve' payment.id %}"
+                                    style="display:inline;"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="ssg-btn ssg-btn-success"
+                                    >
+                                        Approve
+                                    </button>
+
+                                </form>
+
+
+                                <form
+                                    method="post"
+                                    action="{% url 'penalty_payment_reject' payment.id %}"
+                                    style="display:inline;"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="ssg-btn ssg-btn-danger"
+                                    >
+                                        Reject
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="ssg-empty">
+
+                <div class="ssg-empty-icon">
+                    📄
+                </div>
+
+                <p>
+                    There are no pending penalty payments.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

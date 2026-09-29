@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard - Smart Saving Group
+{% endblock %}
+
+{% block content %}
+
+<div class="ssg-page-title">
+    Admin Dashboard
+</div>
+
+<p class="text-white mb-4">
+    Full system oversight and financial overview
+</p>
+
+
+<div class="ssg-stat-grid">
+
+    <!-- 1. TOTAL SAVINGS -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Total Savings
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ total_savings|floatformat:0 }}
+        </div>
+
+        <small>RWF</small>
+    </div>
+
+
+    <!-- 2. TOTAL PROFITS -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Total Profits
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ total_profits|floatformat:0 }}
+        </div>
+
+        <small>RWF</small>
+    </div>
+
+
+    <!-- 3. TOTAL PENALTIES -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Total Penalties
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ total_penalties|floatformat:0 }}
+        </div>
+
+        <small>RWF</small>
+    </div>
+
+
+    <!-- 4. ACTIVE LOANS -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Active Loans
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ active_loans }}
+        </div>
+
+        <small>
+            {{ outstanding_loans|floatformat:0 }} RWF outstanding
+        </small>
+    </div>
+
+
+    <!-- 5. GROUP BALANCE -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Group Balance
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ group_balance|floatformat:0 }}
+        </div>
+
+        <small>RWF</small>
+    </div>
+
+
+    <!-- 6. UNPAID PENALTIES -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Unpaid Penalties
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ unpaid_penalty_count }}
+        </div>
+
+        <small>
+            {{ unpaid_penalties|floatformat:0 }} RWF unpaid
+        </small>
+    </div>
+
+
+    <!-- 7. TOTAL MEMBERS -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Total Members
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ total_members }}
+        </div>
+
+        <small>
+            {{ active_members }} active
+        </small>
+    </div>
+
+
+    <!-- 8. TOTAL SHARES -->
+    <div class="ssg-stat-card">
+        <div class="ssg-stat-title">
+            Total Shares
+        </div>
+
+        <div class="ssg-stat-value">
+            {{ total_shares }}
+        </div>
+
+        <small>Shares</small>
+    </div>
+
+</div>
+
+
+<!-- QUICK ACTIONS -->
+
+<div class="ssg-card mt-4">
+
+    <div class="ssg-card-header">
+        <h3>Quick Actions</h3>
+    </div>
+
+    <div class="ssg-card-body">
+
+        <div class="row g-3">
+
+            <!-- PENDING LOANS -->
+            <div class="col-md-3">
+                <a href="{% url 'loan_pending' %}"
+                   class="ssg-btn ssg-btn-primary w-100">
+                    💳 Pending Loans
+                </a>
+            </div>
+
+
+            <!-- PENDING CONTRIBUTIONS -->
+            <div class="col-md-3">
+                <a href="{% url 'contribution_pending' %}"
+                   class="ssg-btn ssg-btn-primary w-100">
+                    💰 Pending Contributions
+                </a>
+            </div>
+
+
+            <!-- PENDING REPAYMENTS -->
+            <div class="col-md-3">
+                <a href="{% url 'repayment_pending' %}"
+                   class="ssg-btn ssg-btn-primary w-100">
+                    💵 Pending Repayments
+                </a>
+            </div>
+
+
+            <!-- PENDING PENALTIES -->
+            <div class="col-md-3">
+                <a href="{% url 'penalty_payment_pending' %}"
+                   class="ssg-btn ssg-btn-gold w-100">
+                    ⚠️ Pending Penalties
+                </a>
+            </div>
+
+            <a href="{% url 'paid_contribution_list' %}" class="ssg-quick-action">
+                <span class="ssg-quick-action-icon">💰</span>
+                <span>Paid Contributions</span>
+            </a>
+
+            <a href="{% url 'members_with_penalties' %}" class="ssg-quick-action">
+                <span class="ssg-quick-action-icon">⚠️</span>
+                <span>Members with Penalties</span>
+            </a>
+
+            <a href="{% url 'active_loan_members' %}" class="ssg-quick-action">
+                <span class="ssg-quick-action-icon">📋</span>
+                <span>Active Loans</span>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

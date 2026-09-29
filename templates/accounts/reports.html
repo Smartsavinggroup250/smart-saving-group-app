@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Smart Saving Group{% endblock %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block page_subtitle %}
+All approved transactions
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-1 fw-bold">All Transactions</h5>
+        <small class="text-muted">
+            Approved transactions only
+        </small>
+    </div>
+
+    <div class="card-body p-0">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Member's ID</th>
+                        <th>Reason</th>
+                        <th class="text-end">Amount (RWF)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for transaction in transactions %}
+
+                    <tr>
+
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+                            {{ transaction.date|date:"d M Y H:i" }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ transaction.member_id }}
+                            </strong>
+                        </td>
+
+                        <td>
+
+                            {% if transaction.reason == "Pay Contribution" %}
+                                <i class="fa-solid fa-piggy-bank text-success me-2"></i>
+
+                            {% elif transaction.reason == "Pay Penalty" %}
+                                <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+
+                            {% elif transaction.reason == "Loan Repayment" %}
+                                <i class="fa-solid fa-money-bill-transfer text-info me-2"></i>
+
+                            {% elif transaction.reason == "Loan Request" %}
+                                <i class="fa-solid fa-hand-holding-dollar text-primary me-2"></i>
+
+                            {% endif %}
+
+                            {{ transaction.reason }}
+
+                        </td>
+
+                        <td class="text-end">
+                            <strong>
+                                {{ transaction.amount|floatformat:2 }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            <span class="badge bg-success">
+                                Approved
+                            </span>
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            No approved transactions found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top">
+
+            <div class="text-muted small">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+
+            <nav aria-label="Reports pagination">
+
+                <ul class="pagination pagination-sm mb-0">
+
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ page_obj.previous_page_number }}">
+                                Previous
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Previous
+                            </span>
+                        </li>
+                    {% endif %}
+
+
+                    {% for num in page_obj.paginator.page_range %}
+
+                        {% if page_obj.number == num %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    {{ num }}
+                                </span>
+                            </li>
+
+                        {% else %}
+
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ num }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ page_obj.next_page_number }}">
+                                Next
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Next
+                            </span>
+                        </li>
+                    {% endif %}
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="mb-4">
+        <h3 style="color: #FFD700;">Pending Loan Repayments</h3>
+        <p class="text-muted">
+            <h6 style="color: #FFD700;"><i>Review and approve or reject member loan repayments.</i></h6>
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            {% if repayments %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-hover">
+
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Loan</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Reference</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for repayment in repayments %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ repayment.member.user.get_full_name }}
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ repayment.member.member_number }}
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.loan.get_loan_type_display }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ repayment.amount|floatformat:2 }}
+                                            RWF
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.get_payment_method_display }}
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.reference }}
+                                    </td>
+
+                                    <td>
+                                        {{ repayment.payment_date|date:"d/m/Y H:i" }}
+                                    </td>
+
+                                    <td>
+
+                                        <div class="d-flex gap-2">
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'repayment_approve' repayment.id %}"
+                                            >
+                                                {% csrf_token %}
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-success"
+                                                    onclick="return confirm('Are you sure you want to approve this repayment?');"
+                                                >
+                                                    Approve
+                                                </button>
+
+                                            </form>
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'repayment_reject' repayment.id %}"
+                                            >
+                                                {% csrf_token %}
+
+                                                <input
+                                                    type="hidden"
+                                                    name="reason"
+                                                    value="Payment could not be verified."
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Are you sure you want to reject this repayment?');"
+                                                >
+                                                    Reject
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-success mb-0">
+                    There are no pending loan repayments.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

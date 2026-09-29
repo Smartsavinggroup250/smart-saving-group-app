@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications | Smart Saving Group{% endblock %}
+
+{% block page_title %}
+    Notifications
+{% endblock %}
+
+{% block page_subtitle %}
+    Stay updated with your account activities
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 class="mb-1">
+                Notifications
+            </h3>
+
+            <p class="text-muted mb-0">
+                You have {{ unread_count }} unread notification{{ unread_count|pluralize }}.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            {% if unread_count > 0 %}
+                <form
+                    method="post"
+                    action="{% url 'notification_mark_all_read' %}"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-primary"
+                    >
+                        <i class="fa-solid fa-check-double"></i>
+                        Mark all as read
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if notifications %}
+                <form
+                    method="post"
+                    action="{% url 'notification_delete_all' %}"
+                    onsubmit="return confirm('Are you sure you want to delete all notifications?');"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-danger"
+                    >
+                        <i class="fa-solid fa-trash"></i>
+                        Clear all
+                    </button>
+                </form>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Notifications -->
+    {% if notifications %}
+
+        <div class="list-group">
+
+            {% for notification in notifications %}
+
+                <div
+                    class="list-group-item
+                    {% if not notification.is_read %}
+                        list-group-item-primary
+                    {% endif %}
+                    p-3"
+                >
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <!-- Notification information -->
+                        <div class="d-flex gap-3">
+
+                            <div class="mt-1">
+
+                                {% if notification.notification_type == "LOAN" %}
+
+                                    <i class="fa-solid fa-hand-holding-dollar text-primary"></i>
+
+                                {% elif notification.notification_type == "CONTRIBUTION" %}
+
+                                    <i class="fa-solid fa-piggy-bank text-success"></i>
+
+                                {% elif notification.notification_type == "REPAYMENT" %}
+
+                                    <i class="fa-solid fa-money-bill-transfer text-info"></i>
+
+                                {% elif notification.notification_type == "PENALTY" %}
+
+                                    <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+
+                                {% else %}
+
+                                    <i class="fa-solid fa-bell text-secondary"></i>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <div>
+
+                                <h6 class="mb-1">
+
+                                    {{ notification.title }}
+
+                                    {% if not notification.is_read %}
+
+                                        <span class="badge bg-primary ms-2">
+                                            New
+                                        </span>
+
+                                    {% endif %}
+
+                                </h6>
+
+
+                                <p class="mb-1 text-muted">
+                                    {{ notification.message }}
+                                </p>
+
+
+                                <small class="text-muted">
+                                    {{ notification.created_at|date:"d M Y, H:i" }}
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2">
+
+                            {% if not notification.is_read %}
+
+                                <form
+                                    method="post"
+                                    action="{% url 'notification_mark_read' notification.pk %}"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="Mark as read"
+                                    >
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+
+                                </form>
+
+                            {% endif %}
+
+
+                            <!-- Delete notification -->
+                            <form
+                                method="post"
+                                action="{% url 'notification_delete' notification.pk %}"
+                                onsubmit="return confirm('Are you sure you want to delete this notification?');"
+                            >
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Delete notification"
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <!-- No notifications -->
+        <div class="text-center py-5">
+
+            <i class="fa-regular fa-bell-slash fa-3x text-muted mb-3"></i>
+
+            <h5>
+                No notifications
+            </h5>
+
+            <p class="text-muted">
+                You don't have any notifications yet.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

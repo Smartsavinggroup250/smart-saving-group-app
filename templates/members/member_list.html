@@ -1,0 +1,158 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between
+            align-items-center mb-4">
+
+    <h2 style="color: #FFD700;">Members</h2>
+
+    <a href="{% url 'member_register' %}"
+       class="btn btn-success">
+        Add Member
+    </a>
+
+</div>
+
+<form method="get" class="mb-3">
+
+    <div class="input-group">
+
+        <input
+            type="text"
+            name="search"
+            value="{{ search }}"
+            class="form-control"
+            placeholder="Search members..."
+        >
+
+        <button
+            type="submit"
+            class="btn btn-success">
+            Search
+        </button>
+
+    </div>
+
+</form>
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover">
+
+                <thead>
+                    <tr>
+                        <th>Member Number</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Joined Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for member in members %}
+
+                    <tr>
+
+                        <td>
+                            {{ member.member_number }}
+                        </td>
+
+                        <td>
+                            {{ member.user.get_full_name }}
+                        </td>
+
+                        <td>
+                            {{ member.phone }}
+                        </td>
+
+                        <td>
+                            {{ member.joined_date }}
+                        </td>
+
+                        <td>
+                            {{ member.status }}
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="5"
+                            class="text-center">
+                            No members found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Members pagination">
+        <ul class="pagination justify-content-center mt-4">
+
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}">
+                        Previous
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            {% endif %}
+
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ num }}{% if search %}&search={{ search|urlencode }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}">
+                        Next
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+{% endif %}
+
+{% endblock %}

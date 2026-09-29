@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit Profile - Smart Saving Group
+{% endblock %}
+
+{% block page_title %}
+Edit Profile
+{% endblock %}
+
+{% block page_subtitle %}
+Update your personal information
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white py-3">
+
+        <h5 class="fw-bold mb-0">
+
+            <i class="fa-solid fa-user-pen me-2 text-primary"></i>
+
+            Edit My Profile
+
+        </h5>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+
+                <div class="alert alert-danger">
+
+                    {{ form.non_field_errors }}
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- PERSONAL INFORMATION -->
+
+            <h6 class="fw-bold text-primary mb-3">
+                Personal Information
+            </h6>
+
+            <div class="row g-3">
+
+                {% for field in form %}
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="{{ field.id_for_label }}"
+                            class="form-label fw-semibold"
+                        >
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.errors %}
+
+                            <div class="text-danger small mt-1">
+
+                                {{ field.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <hr class="my-4">
+
+
+            <div class="d-flex gap-2">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+
+                    <i class="fa-solid fa-floppy-disk me-2"></i>
+
+                    Save Changes
+
+                </button>
+
+
+                <a
+                    href="{% url 'member_detail' %}"
+                    class="btn btn-outline-secondary"
+                >
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
