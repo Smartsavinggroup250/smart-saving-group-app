@@ -346,11 +346,15 @@ def loan_reject(request, pk):
         status="PENDING",
     )
 
-    reason = request.POST.get(
-        "reason",
-        "Loan application rejected."
-    ).strip()
+    reason = request.POST.get("reason", "").strip()
 
+    if len(reason) < 3:
+        messages.error(
+            request,
+            "Please provide a rejection reason of at least 3 characters."
+        )
+        return redirect("loan_pending")
+    
     loan.status = "REJECTED"
 
     loan.rejection_reason = reason

@@ -121,22 +121,51 @@ Pending Penalty Payments - Smart Saving Group
                                 </form>
 
 
+                                                                
+                                <button
+                                    type="button"
+                                    class="ssg-btn ssg-btn-danger"
+                                    onclick="showRejectForm('penalty-payment-reject-{{ payment.id }}')"
+                                >
+                                    Reject
+                                </button>
+
                                 <form
                                     method="post"
                                     action="{% url 'penalty_payment_reject' payment.id %}"
-                                    style="display:inline;"
+                                    id="penalty-payment-reject-{{ payment.id }}"
+                                    class="reject-form"
+                                    style="display: none; margin-top: 8px; min-width: 220px;"
                                 >
-
                                     {% csrf_token %}
+
+                                    <textarea
+                                        name="reason"
+                                        class="form-control form-control-sm"
+                                        placeholder="Enter reason for rejection..."
+                                        rows="2"
+                                        required
+                                        minlength="3"
+                                    ></textarea>
 
                                     <button
                                         type="submit"
                                         class="ssg-btn ssg-btn-danger"
+                                        style="margin-top: 8px;"
                                     >
-                                        Reject
+                                        Confirm Rejection
                                     </button>
 
+                                    <button
+                                        type="button"
+                                        class="ssg-btn"
+                                        style="margin-top: 8px;"
+                                        onclick="hideRejectForm('penalty-payment-reject-{{ payment.id }}')"
+                                    >
+                                        Cancel
+                                    </button>
                                 </form>
+
 
                             </td>
 
@@ -169,5 +198,31 @@ Pending Penalty Payments - Smart Saving Group
     </div>
 
 </div>
+
+
+<script>
+function showRejectForm(formId) {
+    const form = document.getElementById(formId);
+
+    if (form) {
+        form.style.display = "block";
+
+        const textarea = form.querySelector('textarea[name="reason"]');
+        if (textarea) {
+            textarea.focus();
+        }
+    }
+}
+
+function hideRejectForm(formId) {
+    const form = document.getElementById(formId);
+
+    if (form) {
+        form.style.display = "none";
+        form.reset();
+    }
+}
+</script>
+
 
 {% endblock %}

@@ -269,10 +269,14 @@ def contribution_reject(request, pk):
         status="PENDING",
     )
 
-    reason = request.POST.get(
-        "reason",
-        "Contribution rejected."
-    ).strip()
+    reason = request.POST.get("reason", "").strip()
+
+    if len(reason) < 3:
+        messages.error(
+            request,
+            "Please provide a rejection reason of at least 3 characters."
+        )
+        return redirect("contribution_pending")
 
     contribution.status = "REJECTED"
     contribution.rejection_reason = reason

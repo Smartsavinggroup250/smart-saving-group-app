@@ -98,27 +98,46 @@
 
                                             </form>
 
+                                                                                        
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="showRejectForm('repayment-reject-{{ repayment.id }}')"
+                                            >
+                                                Reject
+                                            </button>
+
                                             <form
                                                 method="post"
                                                 action="{% url 'repayment_reject' repayment.id %}"
+                                                id="repayment-reject-{{ repayment.id }}"
+                                                class="reject-form"
+                                                style="display: none; margin-top: 8px; min-width: 220px;"
                                             >
                                                 {% csrf_token %}
 
-                                                <input
-                                                    type="hidden"
+                                                <textarea
                                                     name="reason"
-                                                    value="Payment could not be verified."
-                                                >
+                                                    class="form-control form-control-sm"
+                                                    placeholder="Enter reason for rejection..."
+                                                    rows="2"
+                                                    required
+                                                    minlength="3"
+                                                ></textarea>
 
-                                                <button
-                                                    type="submit"
-                                                    class="btn btn-sm btn-danger"
-                                                    onclick="return confirm('Are you sure you want to reject this repayment?');"
-                                                >
-                                                    Reject
+                                                <button type="submit" class="btn btn-sm btn-danger mt-2">
+                                                    Confirm Rejection
                                                 </button>
 
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-secondary mt-2"
+                                                    onclick="hideRejectForm('repayment-reject-{{ repayment.id }}')"
+                                                >
+                                                    Cancel
+                                                </button>
                                             </form>
+
 
                                         </div>
 
@@ -147,5 +166,30 @@
     </div>
 
 </div>
+
+
+<script>
+function showRejectForm(formId) {
+    const form = document.getElementById(formId);
+
+    if (form) {
+        form.style.display = "block";
+
+        const textarea = form.querySelector('textarea[name="reason"]');
+        if (textarea) {
+            textarea.focus();
+        }
+    }
+}
+
+function hideRejectForm(formId) {
+    const form = document.getElementById(formId);
+
+    if (form) {
+        form.style.display = "none";
+        form.reset();
+    }
+}
+</script>
 
 {% endblock %}

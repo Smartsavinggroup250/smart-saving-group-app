@@ -347,10 +347,16 @@ def repayment_reject(request, pk):
         status="PENDING",
     )
 
-    reason = request.POST.get(
-        "reason",
-        "Repayment rejected.",
-    ).strip()
+    reason = request.POST.get("reason", "").strip()
+
+    if len(reason) < 3:
+        messages.error(
+            request,
+            "Please provide a rejection reason of at least 3 characters."
+        )
+        return redirect("repayment_pending")
+    
+    
 
     repayment.status = "REJECTED"
     repayment.rejection_reason = reason

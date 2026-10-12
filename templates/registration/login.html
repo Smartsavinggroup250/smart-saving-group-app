@@ -129,6 +129,46 @@
             box-shadow: 0 0 0 3px rgba(22, 74, 150, 0.10);
         }
 
+        
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 48px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            border: none;
+            background: transparent;
+            color: #64748b;
+
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover {
+            color: #164a96;
+        }
+
+        .toggle-password:focus-visible {
+            outline: 2px solid #164a96;
+            border-radius: 4px;
+        }
+
+        .toggle-password svg {
+            width: 21px;
+            height: 21px;
+        }
 
         /* =========================
            LOGIN BUTTON
@@ -298,15 +338,46 @@
                         Password
                     </label>
 
-                    <input
-                        type="password"
-                        name="password"
-                        id="id_password"
-                        placeholder="Enter your password"
-                        required
-                    >
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            name="password"
+                            id="id_password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            id="togglePassword"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                            title="Show password"
+                        >
+                            <!-- Eye icon -->
+                            <svg
+                                id="eyeIcon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+
+                    </div>
 
                 </div>
+
 
 
                 <input
@@ -333,5 +404,45 @@
 
 </div>
 
+<script>
+    const passwordInput = document.getElementById("id_password");
+    const togglePassword = document.getElementById("togglePassword");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    const eyeOpen = `
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+    `;
+
+    const eyeClosed = `
+        <path d="M3 3l18 18"/>
+        <path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a15.7 15.7 0 0 1-4 4.8"/>
+        <path d="M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.4 0 2.7-.4 3.8-1"/>
+        <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+    `;
+
+    togglePassword.addEventListener("click", function () {
+        const isPasswordHidden = passwordInput.type === "password";
+
+        passwordInput.type = isPasswordHidden ? "text" : "password";
+
+        eyeIcon.innerHTML = isPasswordHidden ? eyeClosed : eyeOpen;
+
+        togglePassword.setAttribute(
+            "aria-label",
+            isPasswordHidden ? "Hide password" : "Show password"
+        );
+
+        togglePassword.setAttribute(
+            "title",
+            isPasswordHidden ? "Hide password" : "Show password"
+        );
+
+        togglePassword.setAttribute(
+            "aria-pressed",
+            String(isPasswordHidden)
+        );
+    });
+</script>
 </body>
 </html>

@@ -313,9 +313,17 @@ def penalty_payment_reject(request, payment_id):
         status="PENDING",
     )
 
-    if not payment.rejection_reason:
-        payment.rejection_reason = "Payment rejected by reviewer."
+    reason = request.POST.get("reason", "").strip()
 
+    if len(reason) < 3:
+        messages.error(
+            request,
+            "Please provide a rejection reason of at least 3 characters."
+        )
+        return redirect("penalty_payment_pending")
+
+    payment.rejection_reason = reason
+    
     payment.status = "REJECTED"
     payment.approved_by = request.user
     payment.approved_at = timezone.now()
