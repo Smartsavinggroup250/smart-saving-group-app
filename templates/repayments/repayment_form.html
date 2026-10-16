@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
@@ -9,9 +9,13 @@
 
             <div class="card shadow-sm">
 
-                <div class="card-header">
-                    <h4 class="mb-0">Loan Repayment</h4>
-                </div>
+                <h4>
+                    {% if edit_mode %}
+                        Correct Rejected Repayment
+                    {% else %}
+                        Loan Repayment
+                    {% endif %}
+                </h4>
 
                 <div class="card-body">
 
@@ -21,19 +25,19 @@
                         <br>
 
                         <strong>Original Amount:</strong>
-                        {{ loan.principal_amount|floatformat:2 }} RWF
+                        {{ loan.principal_amount|floatformat:2|intcomma }} RWF
                         <br>
 
                         <strong>Total Payable:</strong>
-                        {{ loan.total_payable|floatformat:2 }} RWF
+                        {{ loan.total_payable|floatformat:2|intcomma }} RWF
                         <br>
 
                         <strong>Already Paid:</strong>
-                        {{ loan.total_repaid|floatformat:2 }} RWF
+                        {{ loan.total_repaid|floatformat:2|intcomma }} RWF
                         <br>
 
                         <strong>Remaining Balance:</strong>
-                        {{ loan.remaining_balance|floatformat:2 }} RWF
+                        {{ loan.remaining_balance|floatformat:2|intcomma }} RWF
                     </div>
 
                     {% if messages %}
@@ -118,13 +122,13 @@
                                 Cancel
                             </a>
 
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                            >
-                                Submit Repayment
+                            <button type="submit" class="btn btn-primary">
+                                {% if edit_mode %}
+                                    Correct and Resubmit
+                                {% else %}
+                                    Submit Repayment
+                                {% endif %}
                             </button>
-
                         </div>
 
                     </form>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block title %}
 Treasurer Dashboard - Smart Saving Group
 {% endblock %}
@@ -24,7 +24,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_savings|floatformat:0 }}
+            {{ total_savings|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -38,7 +38,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_profits|floatformat:0 }}
+            {{ total_profits|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -52,7 +52,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_penalties|floatformat:0 }}
+            {{ total_penalties|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -70,7 +70,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <small>
-            {{ outstanding_loans|floatformat:0 }} RWF outstanding
+            {{ outstanding_loans|floatformat:1|intcomma }} RWF outstanding
         </small>
     </div>
 
@@ -82,7 +82,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <div class="ssg-stat-value">
-            {{ group_balance|floatformat:0 }}
+            {{ group_balance|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -100,7 +100,7 @@ Treasurer Dashboard - Smart Saving Group
         </div>
 
         <small>
-            {{ unpaid_penalties|floatformat:0 }} RWF unpaid
+            {{ unpaid_penalties|floatformat:1|intcomma }} RWF unpaid
         </small>
     </div>
 

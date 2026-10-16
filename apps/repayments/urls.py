@@ -33,4 +33,16 @@ urlpatterns = [
         views.repayment_reject,
         name="repayment_reject",
     ),
+    
+    path(
+        "<int:pk>/edit/",
+        views.repayment_edit,
+        name="repayment_edit",
+    ),
+
+    path(
+        "<int:pk>/delete/",
+        views.repayment_delete,
+        name="repayment_delete",
+    ),
 ]

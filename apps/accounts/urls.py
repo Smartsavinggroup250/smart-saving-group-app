@@ -7,11 +7,7 @@ urlpatterns = [
         views.dashboard,
         name="dashboard"
     ),
-    #path(
-    #    "profile/",
-    #    views.profile, 
-    #    name="profile"
-    #),
+    
     path(
         "reports/",
         views.reports,
@@ -22,5 +18,11 @@ urlpatterns = [
         "logout/",
         views.logout_view,
         name="logout"
+    ),
+    
+    path(
+        "monthly-report/",
+        views.monthly_report,
+        name="monthly_report",
     ),
 ]

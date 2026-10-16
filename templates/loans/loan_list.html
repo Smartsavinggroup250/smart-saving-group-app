@@ -1,9 +1,12 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
 <div class="container mt-4">
+
     <div class="d-flex justify-content-between align-items-center">
         <h2 style="color: #FFD700;">My Loans</h2>
+
         <a href="{% url 'loan_apply' %}" class="btn btn-primary">
             Apply for Loan
         </a>
@@ -11,12 +14,13 @@
 
     <div class="card mt-3">
         <div class="card-body">
+
             <table class="table table-bordered align-middle">
                 <thead>
                     <tr>
                         <th>Type</th>
                         <th>Requested Amount</th>
-                        <th>Approved Amount / Balance</th> <!-- Updated header for clarity -->
+                        <th>Approved Amount / Balance</th>
                         <th>Duration</th>
                         <th>Interest</th>
                         <th>Status</th>
@@ -24,58 +28,140 @@
                         <th>Action</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for loan in loans %}
                     <tr>
                         <td>{{ loan.get_loan_type_display }}</td>
-                        <td>RWF {{ loan.requested_amount }}</td>
+
+                        <td>
+                            RWF {{ loan.requested_amount|intcomma }}
+                        </td>
+
                         <td>
                             {% if loan.approved_amount %}
-                                RWF {{ loan.approved_amount }}
-                                
-                                <!-- ADDED YOUR BREAKDOWN HERE -->
+                                RWF {{ loan.approved_amount|intcomma }}
+
                                 <div class="mt-2 border-top pt-1">
                                     <small class="text-muted d-block">
-                                        Total Payable: {{ loan.total_payable|floatformat:2 }} RWF
+                                        Total Payable:
+                                        {{ loan.total_payable|floatformat:2|intcomma }} RWF
                                     </small>
+
                                     <small class="text-muted d-block">
-                                        Paid: {{ loan.total_repaid|floatformat:2 }} RWF
+                                        Paid:
+                                        {{ loan.total_repaid|floatformat:2|intcomma }} RWF
                                     </small>
+
                                     <strong class="text-dark small d-block mt-1">
-                                        Remaining: {{ loan.remaining_balance|floatformat:2 }} RWF
+                                        Remaining:
+                                        {{ loan.remaining_balance|floatformat:2|intcomma }} RWF
                                     </strong>
                                 </div>
                             {% else %}
                                 -
                             {% endif %}
                         </td>
-                        <td>{{ loan.duration_months }} months</td>
-                        <td>{{ loan.interest_rate }}%</td>
-                        <td>{{ loan.get_status_display }}</td>
-                        <td>{{ loan.application_date|date:"d/m/Y" }}</td>
+
                         <td>
-                            {% if loan.status == "APPROVED" or loan.status == "DISBURSED" %}
+                            {{ loan.duration_months }} months
+                        </td>
+
+                        <td>
+                            {{ loan.interest_rate }}%
+                        </td>
+
+                        <td>
+                            {% if loan.status == "COMPLETED" %}
+                                <span class="badge bg-success px-3 py-2">
+                                    {{ loan.get_status_display }}
+                                </span>
+
+                            {% elif loan.status == "APPROVED" %}
+                                <span class="badge bg-primary px-3 py-2">
+                                    {{ loan.get_status_display }}
+                                </span>
+
+                            {% elif loan.status == "REJECTED" %}
+                                <span class="badge bg-danger px-3 py-2">
+                                    {{ loan.get_status_display }}
+                                </span>
+
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2">
+                                    {{ loan.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ loan.application_date|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            {% if loan.status == "REJECTED" %}
+
+                                <div class="text-danger small mb-2">
+                                    <strong>Rejection reason:</strong>
+                                    {{ loan.rejection_reason|default:"No reason provided" }}
+                                </div>
+
+                                <a
+                                    href="{% url 'loan_edit' loan.id %}"
+                                    class="btn btn-sm btn-warning mb-1"
+                                >
+                                    Edit
+                                </a>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'loan_delete' loan.id %}"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Delete this rejected loan application?');"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-danger mb-1"
+                                    >
+                                        Delete
+                                    </button>
+                                </form>
+
+                            {% elif loan.status == "APPROVED" or loan.status == "DISBURSED" %}
+
                                 {% if not loan.is_fully_paid %}
-                                    <a href="{% url 'repayment_create' loan.id %}" class="btn btn-sm btn-primary">
+                                    <a
+                                        href="{% url 'repayment_create' loan.id %}"
+                                        class="btn btn-sm btn-primary"
+                                    >
                                         Make Repayment
                                     </a>
                                 {% else %}
-                                    <span class="badge bg-success">Fully Paid</span>
+                                    <span class="text-success">
+                                        Fully Paid
+                                    </span>
                                 {% endif %}
+
                             {% else %}
-                                <span class="text-muted small">No Action</span>
+                                <span class="text-muted small">
+                                    No Action
+                                </span>
                             {% endif %}
                         </td>
                     </tr>
+
                     {% empty %}
                     <tr>
-                        <td colspan="8">
+                        <td colspan="8" class="text-center">
                             No loans found.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+
         </div>
     </div>
 </div>

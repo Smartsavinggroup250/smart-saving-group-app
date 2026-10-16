@@ -1,9 +1,20 @@
+
 from django import forms
 
 from .models import MonthlyContribution
 
 
 class MonthlyContributionForm(forms.ModelForm):
+    month = forms.DateField(
+        input_formats=["%Y-%m", "%Y-%m-%d"],
+        widget=forms.DateInput(
+            format="%Y-%m",
+            attrs={
+                "type": "month",
+                "class": "form-control",
+            },
+        ),
+    )
 
     class Meta:
         model = MonthlyContribution
@@ -17,12 +28,6 @@ class MonthlyContributionForm(forms.ModelForm):
         ]
 
         widgets = {
-            "month": forms.DateInput(
-                attrs={
-                    "type": "date",
-                    "class": "form-control",
-                }
-            ),
             "amount": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -48,3 +53,7 @@ class MonthlyContributionForm(forms.ModelForm):
                 }
             ),
         }
+
+    def clean_month(self):
+        selected_month = self.cleaned_data["month"]
+        return selected_month.replace(day=1)

@@ -1,16 +1,34 @@
+
 from decimal import Decimal
+from datetime import date, datetime, time
+
 from django.contrib.auth import logout
-from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import render, redirect
+from django.utils import timezone
 from django.views.decorators.http import require_POST
-
+from playwright.sync_api import sync_playwright
+from apps.accounts.models import MonthlyReportBalance
 from apps.members.models import Member
 from apps.savings.models import MonthlyContribution, SavingsTransaction
 from apps.loans.models import Loan
 from apps.repayments.models import LoanRepayment
 from apps.penalties.models import Penalty, PenaltyPayment
+
+from io import BytesIO
+
+from django.http import HttpResponse
+from django.template.loader import get_template
+from django.conf import settings
+from django.contrib.staticfiles import finders
+from xhtml2pdf import pisa
+import os
+
+
+
+
 
 # ======================================================
 # LOGOUT
@@ -21,110 +39,97 @@ from apps.penalties.models import Penalty, PenaltyPayment
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+
 # ======================================================
 # REPORTS
 # ======================================================
 
 @login_required
 def reports(request):
-    from apps.savings.models import MonthlyContribution
-    from apps.loans.models import Loan
-    from apps.repayments.models import LoanRepayment
-    from apps.penalties.models import PenaltyPayment
-
     transactions = []
 
-    # --------------------------------------------------
-    # Approved Contributions
-    # --------------------------------------------------
-
+    # APPROVED CONTRIBUTIONS
     contributions = MonthlyContribution.objects.filter(
         status="APPROVED"
     ).select_related("member")
 
     for contribution in contributions:
         transactions.append({
-            "date": contribution.approved_at or contribution.updated_at,
+            "date": (
+                contribution.approved_at
+                or getattr(contribution, "updated_at", None)
+                or contribution.month
+            ),
             "member_id": contribution.member.member_number,
             "reason": "Pay Contribution",
             "amount": contribution.amount,
             "status": "Approved",
         })
 
-    # --------------------------------------------------
-    # Approved Loan Repayments
-    # --------------------------------------------------
-
+    # APPROVED LOAN REPAYMENTS
     repayments = LoanRepayment.objects.filter(
         status="APPROVED"
     ).select_related("member")
 
     for repayment in repayments:
         transactions.append({
-            "date": repayment.approved_at or repayment.updated_at,
+            "date": (
+                repayment.approved_at
+                or getattr(repayment, "updated_at", None)
+                or repayment.payment_date
+            ),
             "member_id": repayment.member.member_number,
             "reason": "Loan Repayment",
             "amount": repayment.amount,
             "status": "Approved",
         })
 
-    # --------------------------------------------------
-    # Approved Penalty Payments
-    # --------------------------------------------------
-
+    # APPROVED PENALTY PAYMENTS
     penalty_payments = PenaltyPayment.objects.filter(
         status="APPROVED"
     ).select_related("member")
 
     for payment in penalty_payments:
         transactions.append({
-            "date": payment.approved_at or payment.updated_at,
+            "date": (
+                getattr(payment, "approved_at", None)
+                or getattr(payment, "updated_at", None)
+                or payment.payment_date
+            ),
             "member_id": payment.member.member_number,
             "reason": "Pay Penalty",
             "amount": payment.amount,
             "status": "Approved",
         })
 
-    # --------------------------------------------------
-    # Approved Loan Requests
-    # --------------------------------------------------
-
+    # APPROVED / DISBURSED / COMPLETED LOANS
     loans = Loan.objects.filter(
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-            "COMPLETED",
-        ]
+        status__in=["APPROVED", "DISBURSED", "COMPLETED"]
     ).select_related("member")
 
     for loan in loans:
         transactions.append({
-            "date": loan.approved_at or loan.updated_at,
+            "date": (
+                loan.disbursed_at
+                or loan.approved_at
+                or loan.application_date
+            ),
             "member_id": loan.member.member_number,
             "reason": "Loan Request",
             "amount": loan.approved_amount or loan.requested_amount,
             "status": "Approved",
         })
 
-    # --------------------------------------------------
-    # Newest transactions first
-    # --------------------------------------------------
-
+    # NEWEST TRANSACTIONS FIRST
     transactions.sort(
         key=lambda transaction: transaction["date"],
-        reverse=True
+        reverse=True,
     )
 
-    # ======================================================
     # PAGINATION
-    # 10 transactions per page
-    # ======================================================
-
     paginator = Paginator(transactions, 10)
-
-    page_number = request.GET.get("page")
-
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -142,88 +147,52 @@ def reports(request):
 
 @login_required
 def dashboard(request):
-
     user = request.user
 
-    # --------------------------------------------------
-    # SUPERUSER / ADMIN
-    # --------------------------------------------------
-
     if user.is_superuser:
-
-        context = get_management_dashboard_data()
-
         return render(
             request,
             "dashboard/admin.html",
-            context
+            get_management_dashboard_data(),
         )
 
     role = getattr(
         getattr(user, "profile", None),
         "role",
-        None
+        None,
     )
 
-    # --------------------------------------------------
-    # ADMIN
-    # --------------------------------------------------
-
     if role == "ADMIN":
-
-        context = get_management_dashboard_data()
-
         return render(
             request,
             "dashboard/admin.html",
-            context
+            get_management_dashboard_data(),
         )
 
-    # --------------------------------------------------
-    # TREASURER
-    # --------------------------------------------------
-
     elif role == "TREASURER":
-
-        context = get_management_dashboard_data()
-
         return render(
             request,
             "dashboard/treasurer.html",
-            context
+            get_management_dashboard_data(),
         )
 
-    # --------------------------------------------------
-    # MEMBER
-    # --------------------------------------------------
-
     elif role == "MEMBER":
-
         member = getattr(user, "member", None)
 
         if not member:
             return redirect("login")
 
-        context = get_member_dashboard_data(member)
-
         return render(
             request,
             "dashboard/member.html",
-            context
+            get_member_dashboard_data(member),
         )
 
-    # --------------------------------------------------
-    # AUDITOR
-    # --------------------------------------------------
-
     elif role == "AUDITOR":
-
-        context = get_management_dashboard_data()
-
         return render(
             request,
             "dashboard/auditor.html",
-            context
+            get_management_dashboard_data(),
         )
 
     return redirect("login")
@@ -231,15 +200,12 @@ def dashboard(request):
 
 # ======================================================
 # MANAGEMENT DASHBOARD
-# ADMIN + TREASURER
+# ADMIN + TREASURER + AUDITOR
 # ======================================================
 
 def get_management_dashboard_data():
 
-    # ==================================================
     # MEMBERS
-    # ==================================================
-
     total_members = Member.objects.count()
 
     active_members = Member.objects.filter(
@@ -247,164 +213,78 @@ def get_management_dashboard_data():
     ).count()
 
     total_shares = (
-        Member.objects.aggregate(
-            total=Sum("shares")
-        )["total"]
+        Member.objects.aggregate(total=Sum("shares"))["total"]
         or 0
     )
 
-    # ==================================================
     # TOTAL SAVINGS
-    # Approved contributions only
-    # ==================================================
-
     total_savings = (
         SavingsTransaction.objects.filter(
             transaction_type="CONTRIBUTION"
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # ==================================================
     # ACTIVE LOANS
-    # ==================================================
-
     active_loan_queryset = Loan.objects.filter(
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-        ]
+        status__in=["APPROVED", "DISBURSED"]
     )
 
     active_loans = active_loan_queryset.count()
 
-    # --------------------------------------------------
-    # Total outstanding amount of active loans
-    # --------------------------------------------------
-
     outstanding_loans = sum(
-        (
-            loan.remaining_balance
-            for loan in active_loan_queryset
-        ),
-        Decimal("0.00")
+        (loan.remaining_balance for loan in active_loan_queryset),
+        Decimal("0.00"),
     )
 
-    # ==================================================
-    # TOTAL PROFITS
-    #
-    # Interest generated from all approved loans
-    # ==================================================
-
+    # TOTAL INTEREST GENERATED
     approved_loans = Loan.objects.filter(
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-            "COMPLETED",
-        ]
+        status__in=["APPROVED", "DISBURSED", "COMPLETED"]
     )
 
     total_profits = sum(
-        (
-            loan.total_interest
-            for loan in approved_loans
-        ),
-        Decimal("0.00")
+        (loan.total_interest for loan in approved_loans),
+        Decimal("0.00"),
     )
 
-    # ==================================================
-    # PENDING LOANS
-    #
-    # Loans requested by members waiting for approval
-    # ==================================================
-
+    # PENDING TRANSACTIONS
     pending_loans = Loan.objects.filter(
         status="PENDING"
     ).count()
-
-    # ==================================================
-    # PENDING CONTRIBUTIONS
-    #
-    # Contributions paid by members waiting for approval
-    # ==================================================
 
     pending_contributions = MonthlyContribution.objects.filter(
         status="PENDING"
     ).count()
 
-    # ==================================================
-    # PENDING REPAYMENTS
-    #
-    # Loan repayments submitted by members
-    # waiting for approval
-    # ==================================================
-
     pending_repayments = LoanRepayment.objects.filter(
         status="PENDING"
     ).count()
 
-    # ==================================================
     # TOTAL PENALTIES
-    #
-    # All penalties:
-    # PENDING + PAID
-    # ==================================================
-
     total_penalties = (
         Penalty.objects.filter(
-            status__in=[
-                "PENDING",
-                "PAID",
-            ]
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+            status__in=["PENDING", "PAID"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # ==================================================
     # UNPAID PENALTIES
-    #
-    # Penalties that are still unpaid
-    # ==================================================
-
     unpaid_penalties = (
         Penalty.objects.filter(
             status="PENDING"
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # Number of unpaid penalties
     unpaid_penalty_count = Penalty.objects.filter(
         status="PENDING"
     ).count()
-
-    # ==================================================
-    # PENDING PENALTY PAYMENTS
-    #
-    # Penalty payments submitted by members
-    # waiting for approval
-    # ==================================================
 
     pending_penalty_payments = PenaltyPayment.objects.filter(
         status="PENDING"
     ).count()
 
-    # ==================================================
     # GROUP BALANCE
-    #
-    # Total Savings
-    # + Total Profits
-    # + Total Penalties
-    # - Active Loans Outstanding
-    # - Unpaid Penalties
-    # ==================================================
-
     group_balance = (
         total_savings
         + total_profits
@@ -413,48 +293,21 @@ def get_management_dashboard_data():
         - unpaid_penalties
     )
 
-    # ==================================================
-    # RETURN DATA
-    # ==================================================
-
     return {
-
-        # ------------------------------------------------
-        # MAIN CARDS
-        # ------------------------------------------------
-
         "total_savings": total_savings,
-
         "total_profits": total_profits,
-
         "total_penalties": total_penalties,
-
         "active_loans": active_loans,
-
         "outstanding_loans": outstanding_loans,
-
         "group_balance": group_balance,
-
         "unpaid_penalties": unpaid_penalties,
-
         "unpaid_penalty_count": unpaid_penalty_count,
-
         "total_members": total_members,
-
         "active_members": active_members,
-
         "total_shares": total_shares,
-
-        # ------------------------------------------------
-        # QUICK ACTIONS
-        # ------------------------------------------------
-
         "pending_loans": pending_loans,
-
         "pending_contributions": pending_contributions,
-
         "pending_repayments": pending_repayments,
-
         "pending_penalty_payments": pending_penalty_payments,
     }
 
@@ -465,99 +318,52 @@ def get_management_dashboard_data():
 
 def get_member_dashboard_data(member):
 
-    # ==================================================
-    # GROUP TOTAL SAVINGS
-    # ==================================================
-
+    # GROUP SAVINGS
     total_savings = (
         SavingsTransaction.objects.filter(
             transaction_type="CONTRIBUTION"
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # ==================================================
     # GROUP ACTIVE LOANS
-    # ==================================================
-
     active_loan_queryset = Loan.objects.filter(
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-        ]
+        status__in=["APPROVED", "DISBURSED"]
     )
 
     active_loans = active_loan_queryset.count()
 
-    # --------------------------------------------------
-    # Outstanding amount of active loans
-    # --------------------------------------------------
-
     outstanding_loans = sum(
-        (
-            loan.remaining_balance
-            for loan in active_loan_queryset
-        ),
-        Decimal("0.00")
+        (loan.remaining_balance for loan in active_loan_queryset),
+        Decimal("0.00"),
     )
 
-    # ==================================================
-    # GROUP TOTAL PROFITS
-    # ==================================================
-
+    # GROUP INTEREST
     approved_loans = Loan.objects.filter(
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-            "COMPLETED",
-        ]
+        status__in=["APPROVED", "DISBURSED", "COMPLETED"]
     )
 
     total_profits = sum(
-        (
-            loan.total_interest
-            for loan in approved_loans
-        ),
-        Decimal("0.00")
+        (loan.total_interest for loan in approved_loans),
+        Decimal("0.00"),
     )
 
-    # ==================================================
-    # GROUP TOTAL PENALTIES
-    #
-    # Paid + unpaid penalties
-    # ==================================================
-
+    # GROUP PENALTIES
     total_penalties = (
         Penalty.objects.filter(
-            status__in=[
-                "PENDING",
-                "PAID",
-            ]
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+            status__in=["PENDING", "PAID"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
-
-    # ==================================================
-    # GROUP UNPAID PENALTIES
-    # ==================================================
 
     unpaid_penalties = (
         Penalty.objects.filter(
             status="PENDING"
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # ==================================================
     # GROUP BALANCE
-    # ==================================================
-
     group_balance = (
         total_savings
         + total_profits
@@ -566,118 +372,720 @@ def get_member_dashboard_data(member):
         - unpaid_penalties
     )
 
-    # ==================================================
     # MY SAVINGS
-    # ==================================================
-
     my_savings = (
         SavingsTransaction.objects.filter(
             member=member,
-            transaction_type="CONTRIBUTION"
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+            transaction_type="CONTRIBUTION",
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
 
-    # ==================================================
     # MY PENALTIES
-    # ==================================================
-
     my_total_penalties = (
         Penalty.objects.filter(
             member=member,
-            status__in=[
-                "PENDING",
-                "PAID",
-            ]
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
+            status__in=["PENDING", "PAID"],
+        ).aggregate(total=Sum("amount"))["total"]
         or Decimal("0.00")
     )
-
-    # --------------------------------------------------
-    # My unpaid penalties
-    # --------------------------------------------------
 
     my_unpaid_penalties = (
         Penalty.objects.filter(
             member=member,
-            status="PENDING"
+            status="PENDING",
+        ).aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+    my_unpaid_penalty_count = Penalty.objects.filter(
+        member=member,
+        status="PENDING",
+    ).count()
+
+    # MY ACTIVE LOANS
+    my_active_loans = Loan.objects.filter(
+        member=member,
+        status__in=["APPROVED", "DISBURSED"],
+    )
+
+    my_active_loan_count = my_active_loans.count()
+
+    my_loan_balance = sum(
+        (loan.remaining_balance for loan in my_active_loans),
+        Decimal("0.00"),
+    )
+
+    return {
+        "total_savings": total_savings,
+        "total_profits": total_profits,
+        "total_penalties": total_penalties,
+        "active_loans": active_loans,
+        "outstanding_loans": outstanding_loans,
+        "group_balance": group_balance,
+        "my_savings": my_savings,
+        "my_total_penalties": my_total_penalties,
+        "my_unpaid_penalties": my_unpaid_penalties,
+        "my_unpaid_penalty_count": my_unpaid_penalty_count,
+        "my_active_loan_count": my_active_loan_count,
+        "my_loan_balance": my_loan_balance,
+    }
+
+
+# ======================================================
+# MONTHLY FINANCIAL REPORT
+# Report month becomes available on the 6th.
+# Contribution deadline: 5th of the following month.
+# ======================================================
+
+@login_required
+def monthly_report(request):
+
+    today = timezone.localdate()
+    current_month_start = date(today.year, today.month, 1)
+
+    # Determine the most recently completed contribution month.
+    previous_calendar_month = (
+        current_month_start - timezone.timedelta(days=1)
+    ).replace(day=1)
+
+    if today.day >= 6:
+        default_month = previous_calendar_month
+    else:
+        default_month = (
+            previous_calendar_month - timezone.timedelta(days=1)
+        ).replace(day=1)
+
+    # --------------------------------------------------
+    # SELECT REPORT MONTH
+    # --------------------------------------------------
+
+    try:
+        year = int(request.GET.get("year", default_month.year))
+        month = int(request.GET.get("month", default_month.month))
+        selected_month = date(year, month, 1)
+    except (ValueError, TypeError):
+        selected_month = default_month
+
+    year = selected_month.year
+    month = selected_month.month
+
+    # --------------------------------------------------
+    # CALENDAR MONTH BOUNDARIES
+    # --------------------------------------------------
+
+    if month == 12:
+        next_month_start = date(year + 1, 1, 1)
+    else:
+        next_month_start = date(year, month + 1, 1)
+
+    start_of_month = timezone.make_aware(
+        datetime.combine(selected_month, time.min)
+    )
+
+    start_of_next_month = timezone.make_aware(
+        datetime.combine(next_month_start, time.min)
+    )
+
+    # --------------------------------------------------
+    # ACCOUNTING PERIOD: 6TH TO 5TH
+    # --------------------------------------------------
+
+    start_date = date(year, month, 6)
+    end_date_exclusive = next_month_start.replace(day=6)
+
+    start_datetime = timezone.make_aware(
+        datetime.combine(start_date, time.min)
+    )
+
+    end_datetime = timezone.make_aware(
+        datetime.combine(end_date_exclusive, time.min)
+    )
+
+    # --------------------------------------------------
+    # EXPECTED CONTRIBUTIONS
+    # One share = Frw 10,000
+    # --------------------------------------------------
+
+    total_active_shares = (
+        Member.objects.filter(
+            status="ACTIVE"
+        ).aggregate(total=Sum("shares"))["total"]
+        or 0
+    )
+
+    expected_contributions = (
+        Decimal(total_active_shares) * Decimal("10000")
+    )
+
+    # --------------------------------------------------
+    # APPROVED CONTRIBUTIONS FOR SELECTED MONTH
+    # --------------------------------------------------
+
+    approved_contributions = MonthlyContribution.objects.filter(
+        status="APPROVED",
+        month__year=year,
+        month__month=month,
+    )
+
+    total_contributions = (
+        approved_contributions.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    contribution_count = approved_contributions.count()
+
+    # --------------------------------------------------
+    # LOAN PORTFOLIO
+    # Opening balance is carried forward from the
+    # immediately preceding month's saved report.
+    # --------------------------------------------------
+
+    if month == 1:
+        previous_loan_year = year - 1
+        previous_loan_month = 12
+    else:
+        previous_loan_year = year
+        previous_loan_month = month - 1
+
+    previous_loan_report = MonthlyReportBalance.objects.filter(
+        year=previous_loan_year,
+        month=previous_loan_month,
+    ).first()
+
+    if previous_loan_report:
+        opening_loan_balance = (
+            previous_loan_report.current_outstanding_loan_balance
+        )
+    else:
+        opening_loan_balance = Decimal("0.00")
+
+    # New loans disbursed during the selected calendar month.
+    newly_disbursed_loans = Loan.objects.filter(
+        status__in=["DISBURSED", "COMPLETED"],
+        disbursed_at__gte=start_of_month,
+        disbursed_at__lt=start_of_next_month,
+    )
+
+    # Includes principal plus the loan's calculated interest.
+    new_loans_disbursed = sum(
+        (loan.total_payable for loan in newly_disbursed_loans),
+        Decimal("0.00"),
+    )
+
+    # Approved repayments during the selected calendar month.
+    loan_portfolio_repayments = LoanRepayment.objects.filter(
+        status="APPROVED",
+        approved_at__gte=start_of_month,
+        approved_at__lt=start_of_next_month,
+    )
+
+    # TEMPORARY ESTIMATE:
+    # Repayment records do not separately identify principal
+    # and interest, so this currently uses the full repayment.
+    loan_principal_repaid = (
+        loan_portfolio_repayments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    current_outstanding_loan_balance = max(
+        opening_loan_balance
+        + new_loans_disbursed
+        - loan_principal_repaid,
+        Decimal("0.00"),
+    )
+
+    # --------------------------------------------------
+    # APPROVED LOAN REPAYMENTS IN THE ACCOUNTING PERIOD
+    # --------------------------------------------------
+
+    approved_repayments = LoanRepayment.objects.filter(
+        status="APPROVED",
+        payment_date__gte=start_datetime,
+        payment_date__lt=end_datetime,
+    )
+
+    total_repayments = (
+        approved_repayments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    repayment_count = approved_repayments.count()
+
+    # --------------------------------------------------
+    # APPROVED PENALTY PAYMENTS IN THE ACCOUNTING PERIOD
+    # --------------------------------------------------
+
+    approved_penalty_payments = PenaltyPayment.objects.filter(
+        status="APPROVED",
+        payment_date__gte=start_datetime,
+        payment_date__lt=end_datetime,
+    )
+
+    total_penalty_payments = (
+        approved_penalty_payments.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    penalty_payment_count = approved_penalty_payments.count()
+
+    # --------------------------------------------------
+    # LOANS DISBURSED IN THE ACCOUNTING PERIOD
+    # This is the principal cash outflow, not total payable.
+    # --------------------------------------------------
+
+    disbursed_loans = Loan.objects.filter(
+        status__in=["DISBURSED", "COMPLETED"],
+        disbursed_at__gte=start_datetime,
+        disbursed_at__lt=end_datetime,
+    )
+
+    total_loans_disbursed = sum(
+        (
+            loan.principal_amount
+            for loan in disbursed_loans
+        ),
+        Decimal("0.00"),
+    )
+
+    disbursed_loan_count = disbursed_loans.count()
+
+    # --------------------------------------------------
+    # CURRENT OUTSTANDING LOANS
+    # Current live balance of active loans.
+    # --------------------------------------------------
+
+    active_loans = Loan.objects.filter(
+        status__in=["APPROVED", "DISBURSED"]
+    )
+
+    outstanding_loans = sum(
+        (loan.remaining_balance for loan in active_loans),
+        Decimal("0.00"),
+    )
+
+    active_loan_count = active_loans.count()
+
+    # --------------------------------------------------
+    # CURRENT CUMULATIVE SAVINGS LEDGER
+    # --------------------------------------------------
+
+    total_savings = (
+        SavingsTransaction.objects.filter(
+            transaction_type="CONTRIBUTION"
+        ).aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+    
+    # --------------------------------------------------
+    # PENALTIES REPORT
+    # Accounting period: 6th to 5th of the next month
+    # --------------------------------------------------
+
+    # 1. Penalties assessed during the selected period
+    penalties_assessed = Penalty.objects.filter(
+        issued_at__gte=start_datetime,
+        issued_at__lt=end_datetime,
+    ).exclude(
+        status__in=["REJECTED", "WAIVED"]
+    )
+
+    penalties_assessed_amount = (
+        penalties_assessed.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # 2. Old unpaid penalties assessed before this period
+    old_unpaid_penalties = (
+        Penalty.objects.filter(
+            issued_at__lt=start_datetime,
+            status__in=["PENDING", "APPROVED"],
         ).aggregate(
             total=Sum("amount")
         )["total"]
         or Decimal("0.00")
     )
 
-    # Number of my unpaid penalties
-    my_unpaid_penalty_count = Penalty.objects.filter(
-        member=member,
-        status="PENDING"
+    # 3. Total penalties due
+    total_penalties_due = (
+        old_unpaid_penalties
+        + penalties_assessed_amount
+    )
+
+    # 4. Penalties collected during the selected period
+    penalty_payments_in_period = PenaltyPayment.objects.filter(
+        status="APPROVED",
+        payment_date__gte=start_datetime,
+        payment_date__lt=end_datetime,
+    )
+
+    penalties_collected = (
+        penalty_payments_in_period.aggregate(
+            total=Sum("amount")
+        )["total"]
+        or Decimal("0.00")
+    )
+
+    # 5. Outstanding penalties
+    outstanding_penalties = max(
+        total_penalties_due - penalties_collected,
+        Decimal("0.00"),
+    )
+
+
+    # --------------------------------------------------
+    # MEMBERS
+    # --------------------------------------------------
+
+    total_members = Member.objects.count()
+
+    active_members = Member.objects.filter(
+        status="ACTIVE"
     ).count()
 
-    # ==================================================
-    # MY ACTIVE LOANS
-    # ==================================================
+    # --------------------------------------------------
+    # MEMBERS WHO HAVE NOT FULLY PAID THIS MONTH
+    # --------------------------------------------------
 
-    my_active_loans = Loan.objects.filter(
-        member=member,
-        status__in=[
-            "APPROVED",
-            "DISBURSED",
-        ]
+    active_members_qs = Member.objects.filter(
+        status="ACTIVE"
     )
 
-    my_active_loan_count = my_active_loans.count()
+    members_who_have_not_paid = 0
+
+    for member in active_members_qs:
+        expected_amount = (
+            Decimal(member.shares) * Decimal("10000")
+        )
+
+        approved_amount = (
+            MonthlyContribution.objects.filter(
+                member=member,
+                month__year=year,
+                month__month=month,
+                status="APPROVED",
+            ).aggregate(total=Sum("amount"))["total"]
+            or Decimal("0.00")
+        )
+
+        if approved_amount < expected_amount:
+            members_who_have_not_paid += 1
 
     # --------------------------------------------------
-    # My loan outstanding balance
+    # OUTSTANDING CONTRIBUTIONS FROM OLDER MONTHS
     # --------------------------------------------------
 
-    my_loan_balance = sum(
-        (
-            loan.remaining_balance
-            for loan in my_active_loans
+    first_contribution_month = (
+        MonthlyContribution.objects
+        .order_by("month")
+        .values_list("month", flat=True)
+        .first()
+    )
+
+    outstanding_old_contributions = Decimal("0.00")
+
+    if first_contribution_month:
+        current_contribution_month = (
+            first_contribution_month.replace(day=1)
+        )
+
+        expected_monthly_contributions = (
+            Decimal(total_active_shares) * Decimal("10000")
+        )
+
+        while current_contribution_month < selected_month:
+
+            paid_amount = (
+                MonthlyContribution.objects.filter(
+                    status="APPROVED",
+                    month__year=current_contribution_month.year,
+                    month__month=current_contribution_month.month,
+                ).aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
+            monthly_outstanding = (
+                expected_monthly_contributions - paid_amount
+            )
+
+            if monthly_outstanding > 0:
+                outstanding_old_contributions += monthly_outstanding
+
+            if current_contribution_month.month == 12:
+                current_contribution_month = date(
+                    current_contribution_month.year + 1,
+                    1,
+                    1,
+                )
+            else:
+                current_contribution_month = date(
+                    current_contribution_month.year,
+                    current_contribution_month.month + 1,
+                    1,
+                )
+
+    total_contributions_due = (
+        outstanding_old_contributions
+        + expected_contributions
+    )
+
+    outstanding_contributions = max(
+        total_contributions_due - total_contributions,
+        Decimal("0.00"),
+    )
+
+    # --------------------------------------------------
+    # INITIAL BALANCE
+    # Carry forward the previous month's closing balance.
+    # --------------------------------------------------
+
+    previous_report = MonthlyReportBalance.objects.filter(
+        year=previous_loan_year,
+        month=previous_loan_month,
+    ).first()
+
+    if previous_report:
+        initial_balance = previous_report.closing_balance
+    else:
+        initial_balance = Decimal("0.00")
+
+    # --------------------------------------------------
+    # OLD PENALTIES COLLECTED DURING THE PERIOD
+    # --------------------------------------------------
+
+    old_penalties_collected = (
+        Penalty.objects.filter(
+            status="PAID",
+            paid_at__gte=start_datetime,
+            paid_at__lt=end_datetime,
+            issued_at__lt=start_datetime,
+        ).aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+    # --------------------------------------------------
+    # CLOSING BALANCE
+    # --------------------------------------------------
+
+    closing_balance = (
+        initial_balance
+        + total_contributions
+        + total_repayments
+        + penalties_collected
+        - total_loans_disbursed
+    )
+
+    # --------------------------------------------------
+    # SAVE MONTHLY REPORT BALANCES
+    # Also save current outstanding loan balance so the
+    # next month's report can use it as its opening balance.
+    # --------------------------------------------------
+
+    MonthlyReportBalance.objects.update_or_create(
+        year=year,
+        month=month,
+        defaults={
+            "initial_balance": initial_balance,
+            "closing_balance": closing_balance,
+            "current_outstanding_loan_balance": (
+                current_outstanding_loan_balance
+            ),
+        },
+    )
+
+    # --------------------------------------------------
+    # MONTHLY CASH FLOW
+    # --------------------------------------------------
+
+    total_monthly_inflows = (
+        initial_balance
+        + total_contributions
+        + total_repayments
+        + total_penalty_payments
+    )
+
+    monthly_net_cash_flow = (
+        total_monthly_inflows - total_loans_disbursed
+    )
+
+
+    net_financial_position = (
+        closing_balance
+        + outstanding_loans
+        + outstanding_contributions
+        + outstanding_penalties
+    )
+    # --------------------------------------------------
+    # TEMPLATE CONTEXT
+    # --------------------------------------------------
+
+    context = {
+        "selected_month": selected_month,
+        "selected_year": year,
+        "selected_month_number": month,
+
+        "initial_balance": initial_balance,
+        "closing_balance": closing_balance,
+        "total_penalties_incurred": penalties_assessed_amount,
+
+        "total_contributions": total_contributions,
+        "contribution_count": contribution_count,
+        "outstanding_old_contributions": (
+            outstanding_old_contributions
         ),
-        Decimal("0.00")
-    )
+        "expected_contributions": expected_contributions,
+        "total_contributions_due": total_contributions_due,
+        "outstanding_contributions": outstanding_contributions,
 
-    # ==================================================
-    # RETURN DATA
-    # ==================================================
+        "total_repayments": total_repayments,
+        "repayment_count": repayment_count,
 
-    return {
+        "total_penalty_payments": total_penalty_payments,
+        "penalty_payment_count": penalty_payment_count,
+        "old_penalties_collected": old_penalties_collected,
 
-        # ------------------------------------------------
-        # GROUP CARDS
-        # ------------------------------------------------
-
-        "total_savings": total_savings,
-
-        "total_profits": total_profits,
-
-        "total_penalties": total_penalties,
-
-        "active_loans": active_loans,
+        "total_loans_disbursed": total_loans_disbursed,
+        "disbursed_loan_count": disbursed_loan_count,
 
         "outstanding_loans": outstanding_loans,
+        "active_loan_count": active_loan_count,
 
-        "group_balance": group_balance,
+        "opening_loan_balance": opening_loan_balance,
+        "new_loans_disbursed": new_loans_disbursed,
+        "loan_principal_repaid": loan_principal_repaid,
+        "current_outstanding_loan_balance": (
+            current_outstanding_loan_balance
+        ),
 
-        # ------------------------------------------------
-        # MY CARDS
-        # ------------------------------------------------
+        "total_savings": total_savings,
+        "unpaid_penalties": outstanding_penalties,
 
-        "my_savings": my_savings,
+        "total_monthly_inflows": total_monthly_inflows,
+        "monthly_net_cash_flow": monthly_net_cash_flow,
 
-        "my_total_penalties": my_total_penalties,
-
-        "my_unpaid_penalties": my_unpaid_penalties,
-
-        "my_unpaid_penalty_count": my_unpaid_penalty_count,
-
-        "my_active_loan_count": my_active_loan_count,
-
-        "my_loan_balance": my_loan_balance,
+        "total_members": total_members,
+        "active_members": active_members,
+        "members_who_have_not_paid": members_who_have_not_paid,
+        
+        "old_unpaid_penalties": old_unpaid_penalties,
+        "penalties_assessed_amount": penalties_assessed_amount,
+        "total_penalties_due": total_penalties_due,
+        "penalties_collected": penalties_collected,
+        "outstanding_penalties": outstanding_penalties,
+        "net_financial_position": net_financial_position,
     }
+
+    
+    
+    
+    if request.GET.get("format") == "pdf":
+        template = get_template(
+            "accounts/monthly_report.html"
+        )
+
+        html = template.render(context, request)
+        result = None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch()
+
+            try:
+                page = browser.new_page(
+                    viewport={
+                        "width": 1440,
+                        "height": 1000,
+                    }
+                )
+
+                # Establish the website origin so static assets
+                # and the logo can load correctly.
+                page.goto(
+                    request.build_absolute_uri("/"),
+                    wait_until="domcontentloaded",
+                )
+
+                page.set_content(
+                    html,
+                    wait_until="networkidle",
+                )
+
+                page.emulate_media(media="print")
+
+                result = page.pdf(
+                    format="A4",
+                    landscape=True,
+                    print_background=True,
+                    prefer_css_page_size=True,
+                    margin={
+                        "top": "9mm",
+                        "right": "9mm",
+                        "bottom": "9mm",
+                        "left": "9mm",
+                    },
+                )
+
+            finally:
+                browser.close()
+
+        filename = (
+            f"Smart_Saving_Group_Report_{year}_{month:02d}.pdf"
+        )
+
+        response = HttpResponse(
+            result,
+            content_type="application/pdf",
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+
+        return response
+
+    # --------------------------------------------------
+    # DISPLAY NORMAL HTML REPORT
+    # --------------------------------------------------
+
+    return render(
+        request,
+        "accounts/monthly_report.html",
+        context,
+    )
+
+
+def link_callback(uri, rel):
+    if uri.startswith(settings.STATIC_URL):
+        relative_path = uri.replace(
+            settings.STATIC_URL, "", 1
+        )
+        path = finders.find(relative_path)
+
+        if path:
+            return os.path.abspath(path)
+
+    if settings.MEDIA_URL and uri.startswith(settings.MEDIA_URL):
+        relative_path = uri.replace(
+            settings.MEDIA_URL, "", 1
+        )
+        path = os.path.join(
+            settings.MEDIA_ROOT,
+            relative_path,
+        )
+
+        if os.path.isfile(path):
+            return os.path.abspath(path)
+
+    return uri
+
+        

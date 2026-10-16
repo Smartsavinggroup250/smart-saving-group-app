@@ -34,6 +34,20 @@ urlpatterns = [
         name="penalty_payment_reject"
     ),
     
+        
+    path(
+        "payments/<int:payment_id>/edit/",
+        views.penalty_payment_edit,
+        name="penalty_payment_edit",
+    ),
+
+    path(
+        "payments/<int:payment_id>/delete/",
+        views.penalty_payment_delete,
+        name="penalty_payment_delete",
+    ),
+
+    
     path(
         "members-with-penalties/",
         views.members_with_penalties,

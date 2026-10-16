@@ -10,7 +10,8 @@ from apps.members.models import Member
 
 from .forms import PenaltyPaymentForm
 from .models import Penalty, PenaltyPayment
-
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed
+from apps.loans.models import Loan
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -417,4 +418,123 @@ def members_with_penalties(request):
             "penalties": page_obj,
             "page_obj": page_obj,
         },
-    )    
+    )  
+
+
+@login_required
+def penalty_payment_edit(request, payment_id):
+    member = get_object_or_404(Member, user=request.user)
+
+    payment = get_object_or_404(
+        PenaltyPayment,
+        id=payment_id,
+        member=member,
+        status="REJECTED",
+    )
+
+    penalty = payment.penalty
+
+    if penalty.status in ["PAID", "WAIVED"]:
+        messages.error(
+            request,
+            "This penalty can no longer be paid."
+        )
+        return redirect("penalty_list")
+
+    # Prevent another pending payment for the same penalty.
+    another_pending = PenaltyPayment.objects.filter(
+        penalty=penalty,
+        status="PENDING",
+    ).exclude(id=payment.id).exists()
+
+    if another_pending:
+        messages.error(
+            request,
+            "Another payment for this penalty is already pending."
+        )
+        return redirect("penalty_list")
+
+    if request.method == "POST":
+        form = PenaltyPaymentForm(
+            request.POST,
+            instance=payment,
+            penalty=penalty,
+        )
+
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.status = "PENDING"
+            payment.rejection_reason = ""
+            payment.approved_by = None
+            payment.approved_at = None
+            payment.requested_by = request.user
+            payment.save()
+
+            notify_member(
+                member,
+                title="Penalty Payment Resubmitted",
+                message=(
+                    f"Your corrected payment of "
+                    f"{payment.amount:,.2f} RWF for penalty "
+                    f"#{penalty.id} has been resubmitted "
+                    f"and is awaiting approval."
+                ),
+                notification_type="PENALTY",
+            )
+
+            notify_admins_and_treasurers(
+                title="Corrected Penalty Payment",
+                message=(
+                    f"{request.user.get_full_name() or request.user.username} "
+                    f"resubmitted payment #{payment.id} for "
+                    f"penalty #{penalty.id}. Please review it."
+                ),
+                notification_type="PENALTY",
+            )
+
+            messages.success(
+                request,
+                "Payment corrected and resubmitted for approval."
+            )
+            return redirect("penalty_list")
+
+    else:
+        form = PenaltyPaymentForm(
+            instance=payment,
+            penalty=penalty,
+        )
+
+    return render(
+        request,
+        "penalties/penalty_payment_form.html",
+        {
+            "form": form,
+            "penalty": penalty,
+            "payment": payment,
+            "edit_mode": True,
+        },
+    )
+
+
+@login_required
+def penalty_payment_delete(request, payment_id):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    member = get_object_or_404(Member, user=request.user)
+
+    payment = get_object_or_404(
+        PenaltyPayment,
+        id=payment_id,
+        member=member,
+        status="REJECTED",
+    )
+
+    payment.delete()
+
+    messages.success(
+        request,
+        "Rejected penalty payment deleted successfully."
+    )
+    return redirect("penalty_list")
+      

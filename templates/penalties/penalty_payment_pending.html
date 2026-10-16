@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block title %}
 Pending Penalty Payments - Smart Saving Group
 {% endblock %}
@@ -12,18 +12,14 @@ Pending Penalty Payments - Smart Saving Group
     <div class="ssg-card-header">
 
         <div style="font-size: 38px;">
-            💰
+            <h3>💰 Pending Penalty Payments</h3>
         </div>
-
         <div>
-            <h2>
-                Pending Penalty Payments
-            </h2>
-
             <small>
                 Review and approve member penalty payments
             </small>
-        </div>
+
+        </div>    
 
     </div>
 
@@ -78,13 +74,13 @@ Pending Penalty Payments - Smart Saving Group
                             </td>
 
                             <td>
-                                {{ payment.penalty.amount|floatformat:2 }}
+                                {{ payment.penalty.amount|floatformat:2|intcomma }}
                                 RWF
                             </td>
 
                             <td>
                                 <strong>
-                                    {{ payment.amount|floatformat:2 }}
+                                    {{ payment.amount|floatformat:2|intcomma }}
                                     RWF
                                 </strong>
                             </td>

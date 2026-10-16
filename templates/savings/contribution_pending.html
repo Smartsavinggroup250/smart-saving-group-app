@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
@@ -38,7 +38,7 @@
                         </td>
 
                         <td>
-                            {{ contribution.amount }}
+                            {{ contribution.amount|intcomma }}
                         </td>
 
                         <td>

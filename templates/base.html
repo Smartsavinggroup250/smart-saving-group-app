@@ -169,8 +169,19 @@
                     active
                 {% endif %}">
                 <i class="fa-solid fa-chart-pie"></i>
-                <span>Reports</span>
+                <span>Transactions</span>
             </a>
+
+            
+            <!-- MONTHLY REPORT -->
+                <a href="{% url 'monthly_report' %}"
+                    class="ssg-nav-link
+                        {% if request.resolver_match.url_name == 'monthly_report' %}
+                            active
+                        {% endif %}">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>Monthly Report</span>
+                </a>
 
 
             <a

@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -389,3 +389,133 @@ def repayment_reject(request, pk):
     )
 
     return redirect("repayment_pending")
+
+
+@login_required
+def repayment_edit(request, pk):
+    member = getattr(request.user, "member", None)
+
+    if not member:
+        return HttpResponseForbidden(
+            "You do not have a member profile."
+        )
+
+    repayment = get_object_or_404(
+        LoanRepayment,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    loan = repayment.loan
+
+    if loan.status not in ["APPROVED", "DISBURSED"]:
+        messages.error(
+            request,
+            "This loan is no longer accepting repayments."
+        )
+        return redirect("repayment_list")
+
+    if loan.is_fully_paid:
+        messages.error(
+            request,
+            "This loan has already been fully paid."
+        )
+        return redirect("repayment_list")
+
+    if request.method == "POST":
+        form = LoanRepaymentForm(
+            request.POST,
+            instance=repayment,
+        )
+
+        if form.is_valid():
+            amount = form.cleaned_data["amount"]
+            remaining_balance = loan.remaining_balance
+
+            if amount > remaining_balance:
+                form.add_error(
+                    "amount",
+                    (
+                        "Repayment cannot exceed the remaining "
+                        f"balance of {remaining_balance:.2f} RWF."
+                    ),
+                )
+            else:
+                repayment = form.save(commit=False)
+                repayment.status = "PENDING"
+                repayment.rejection_reason = ""
+                repayment.approved_by = None
+                repayment.approved_at = None
+                repayment.requested_by = request.user
+                repayment.save()
+
+                notify_member(
+                    member,
+                    title="Repayment Corrected and Resubmitted",
+                    message=(
+                        f"Your corrected repayment of "
+                        f"{repayment.amount:,.2f} RWF for loan "
+                        f"#{loan.id} has been resubmitted and "
+                        "is awaiting approval."
+                    ),
+                    notification_type="REPAYMENT",
+                )
+
+                notify_admins_and_treasurers(
+                    title="Corrected Repayment Request",
+                    message=(
+                        f"{request.user.get_full_name() or request.user.username} "
+                        f"resubmitted repayment #{repayment.id} "
+                        f"for loan #{loan.id}. Please review it."
+                    ),
+                    notification_type="REPAYMENT",
+                )
+
+                messages.success(
+                    request,
+                    "Repayment corrected and resubmitted for approval."
+                )
+                return redirect("repayment_list")
+
+    else:
+        form = LoanRepaymentForm(instance=repayment)
+
+    return render(
+        request,
+        "repayments/repayment_form.html",
+        {
+            "form": form,
+            "loan": loan,
+            "repayment": repayment,
+            "edit_mode": True,
+        },
+    )
+
+
+@login_required
+def repayment_delete(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    member = getattr(request.user, "member", None)
+
+    if not member:
+        return HttpResponseForbidden(
+            "You do not have a member profile."
+        )
+
+    repayment = get_object_or_404(
+        LoanRepayment,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    repayment.delete()
+
+    messages.success(
+        request,
+        "Rejected repayment deleted successfully."
+    )
+    return redirect("repayment_list")

@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Monthly Financial Report - Smart Saving Group{% endblock %}
+{% block page_title %}Monthly Financial Report{% endblock %}
+{% block page_subtitle %}Monthly savings, loan repayments and financial performance{% endblock %}
+
+{% block content %}
+<style>
+.ssg-report {
+    --blue: #0878ca;
+    --deep: #0752a0;
+    --green: #087a3d;
+    --line: #8bcfe9;
+    --text: #174b83;
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 18px;
+    color: var(--text);
+    font-family: Cambria, Georgia, serif;
+}
+.ssg-report * { box-sizing: border-box; }
+.ssg-report .paper {
+    background: #fff;
+    padding: 28px;
+    border: 1px solid #dce9f0;
+    border-radius: 10px;
+    box-shadow: 0 5px 24px rgba(23,59,86,.09);
+}
+.ssg-report .report-header {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    border-bottom: 5px solid var(--blue);
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+}
+.ssg-report .logo {
+    width: 125px;
+    height: 125px;
+    flex: 0 0 125px;
+    object-fit: contain;
+}
+.ssg-report h1 {
+    margin: 0;
+    color: var(--deep);
+    font-size: clamp(25px, 3vw, 39px);
+    line-height: 1.12;
+    font-weight: 900;
+}
+.ssg-report h1 span {
+    display: block;
+    margin-top: 5px;
+    color: var(--green);
+}
+.ssg-report .period {
+    margin-top: 12px;
+    font-size: 15px;
+    font-weight: 700;
+}
+.ssg-report .period strong { color: #df0606; }
+.ssg-report .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.ssg-report .period-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+}
+.ssg-report .period-form label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.ssg-report .period-form select,
+.ssg-report .period-form input {
+    min-height: 38px;
+    border: 1px solid #b8d5e5;
+    border-radius: 5px;
+    padding: 7px 10px;
+    background: #fff;
+    color: var(--text);
+}
+.ssg-report .btn-report {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 15px;
+    border: 0;
+    border-radius: 5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+.ssg-report .btn-generate { color: #fff; background: var(--blue); }
+.ssg-report .btn-print { color: #fff; background: var(--green); }
+.ssg-report .section-title {
+    background: linear-gradient(90deg, #0870bf, #0789d8);
+    color: #fff;
+    border-radius: 6px;
+    padding: 9px 13px;
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0 0 10px;
+}
+.ssg-report .section-title .num {
+    display: inline-block;
+    margin-right: 10px;
+    padding-right: 10px;
+    border-right: 2px solid rgba(255,255,255,.5);
+}
+.ssg-report .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 13px;
+    margin-bottom: 18px;
+}
+.ssg-report .summary-panel {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f4fbff, #eaf7ff);
+}
+.ssg-report .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #c5e8f6;
+    line-height: 1.4;
+}
+.ssg-report .metric:last-child { border-bottom: 0; }
+.ssg-report .metric strong { font-weight: 800; }
+.ssg-report .value {
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
+}
+.ssg-report .not-calculated {
+    color: #6c7d8a;
+    font-style: italic;
+    font-weight: 500;
+    white-space: normal;
+}
+.ssg-report .columns {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: start;
+}
+.ssg-report .section { min-width: 0; }
+.ssg-report table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: #f8fcff;
+}
+.ssg-report th, .ssg-report td {
+    border: 1px solid #a6d8eb;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+.ssg-report th {
+    background: #e2f4ff;
+    color: var(--deep);
+    font-weight: 800;
+}
+.ssg-report th:last-child, .ssg-report td:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+.ssg-report tr.total td {
+    font-weight: 800;
+    background: #e5f8e8;
+    color: var(--deep);
+}
+.ssg-report .recommendations {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    background: #f7fcff;
+}
+.ssg-report .recommendation {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 5px 0 13px;
+}
+.ssg-report .recommendation:last-child { margin-bottom: 4px; }
+.ssg-report .check {
+    width: 21px;
+    height: 21px;
+    flex: 0 0 21px;
+    border-radius: 50%;
+    background: #159447;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    line-height: 21px;
+}
+.ssg-report .report-note {
+    border-left: 4px solid #0b83ce;
+    background: #eef8ff;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 0 0 18px;
+    font: 12px/1.5 Arial, sans-serif;
+    color: #315a78;
+}
+.ssg-report footer {
+    text-align: center;
+    border-top: 2px solid #1686d0;
+    margin-top: 18px;
+    padding-top: 10px;
+    font-size: 12px;
+    color: var(--deep);
+}
+@media (max-width: 850px) {
+    .ssg-report .columns { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+    .ssg-report { padding: 7px; }
+    .ssg-report .paper { padding: 13px; }
+    .ssg-report .report-header { gap: 11px; align-items: flex-start; }
+    .ssg-report .logo { width: 72px; height: 72px; flex-basis: 72px; }
+    .ssg-report h1 { font-size: 21px; }
+    .ssg-report .period { font-size: 12px; }
+    .ssg-report .summary-grid { grid-template-columns: 1fr; }
+    .ssg-report .metric { font-size: 12px; padding: 9px; }
+    .ssg-report table { font-size: 12px; }
+    .ssg-report th, .ssg-report td { padding: 7px 6px; }
+    .ssg-report .actions { align-items: stretch; }
+}
+@media print {
+    @page { size: A4 landscape; margin: 9mm; }
+    body { background: #fff !important; }
+    body * { visibility: hidden; }
+    .ssg-report, .ssg-report * { visibility: visible; }
+    .ssg-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+        font-size: 10px;
+    }
+    .ssg-report .paper {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .ssg-report .actions { display: none !important; }
+    .ssg-report .report-header { margin-bottom: 9px; padding-bottom: 8px; }
+    .ssg-report .logo { width: 78px; height: 78px; flex-basis: 78px; }
+    .ssg-report h1 { font-size: 24px; }
+    .ssg-report .section-title {
+        padding: 5px 8px;
+        font-size: 12px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    .ssg-report .summary-grid, .ssg-report .columns { gap: 8px; margin-bottom: 9px; }
+    .ssg-report .metric { padding: 5px 7px; }
+    .ssg-report table { font-size: 10px; }
+    .ssg-report th, .ssg-report td { padding: 5px 6px; }
+    .ssg-report .summary-panel, .ssg-report table, .ssg-report .recommendations {
+        break-inside: avoid;
+    }
+    .ssg-report .section-title, .ssg-report th,
+    .ssg-report tr.total td, .ssg-report .summary-panel {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    .ssg-report .report-note { font-size: 9px; margin-bottom: 8px; }
+    .ssg-report footer { margin-top: 8px; }
+}
+
+/* Monthly Report Introduction */
+#introduction,
+#introduction p,
+#introduction h2 {
+    font-family: Cambria, Georgia, serif !important;
+}
+
+#introduction p {
+    font-size: 16px !important;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+#introduction h2 {
+    font-size: 20px !important;
+    font-weight: bold;
+}
+</style>
+
+
+<div class="ssg-report">
+    <main class="paper">
+        <header class="report-header">
+            <img class="logo" src="{% static 'images/Smart Saving Group Logo1.png' %}" alt="Smart Saving Group Logo">
+            <div>
+                <h1>SMART SAVING GROUP <span>MONTHLY FINANCIAL REPORT</span></h1>
+                <div class="period">
+                    Reporting period:
+                    <strong>{{ selected_month|date:"F Y" }}</strong>
+                    &nbsp; | &nbsp; Currency: Rwandan Francs (Frw)
+                </div>
+            </div>
+        </header>
+
+        <div class="actions">
+            <form method="get" class="period-form">
+                <div>
+                    <label for="month">Report month</label>
+                    <select name="month" id="month" class="form-select">
+                        <option value="1" {% if selected_month_number == 1 %}selected{% endif %}>January</option>
+                        <option value="2" {% if selected_month_number == 2 %}selected{% endif %}>February</option>
+                        <option value="3" {% if selected_month_number == 3 %}selected{% endif %}>March</option>
+                        <option value="4" {% if selected_month_number == 4 %}selected{% endif %}>April</option>
+                        <option value="5" {% if selected_month_number == 5 %}selected{% endif %}>May</option>
+                        <option value="6" {% if selected_month_number == 6 %}selected{% endif %}>June</option>
+                        <option value="7" {% if selected_month_number == 7 %}selected{% endif %}>July</option>
+                        <option value="8" {% if selected_month_number == 8 %}selected{% endif %}>August</option>
+                        <option value="9" {% if selected_month_number == 9 %}selected{% endif %}>September</option>
+                        <option value="10" {% if selected_month_number == 10 %}selected{% endif %}>October</option>
+                        <option value="11" {% if selected_month_number == 11 %}selected{% endif %}>November</option>
+                        <option value="12" {% if selected_month_number == 12 %}selected{% endif %}>December</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="year">Year</label>
+                    <input type="number" name="year" id="year" min="2000" max="2100"
+                           value="{{ selected_year }}" required>
+                </div>
+                <button type="submit" class="btn-report btn-generate">
+                    <i class="fa-solid fa-filter"></i> Generate Report
+                </button>
+            </form>
+
+            <a href="?month={{ selected_month_number }}&year={{ selected_year }}&format=pdf"
+                class="btn-report btn-print">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </a>
+        </div>
+
+        <div class="report-note">
+            <section id="introduction">
+                <h2> INTRODUCTION </h2>
+
+                <p> This financial report provides an overview of the financial performance and activities of Smart Saving Group for the reporting period. 
+                    It summarizes members’ savings contributions, loans issued, loan repayments, penalties collected, outstanding balances, and the group’s overall financial position. 
+                    The report aims to promote transparency, accountability, and informed decision-making among group members and the management committee. It also serves as a reference 
+                    for monitoring the group’s financial progress and ensuring compliance with its established financial policies and procedures.
+                </p>
+            </section>    
+        </div>
+
+        <!-- 1. FINANCIAL SUMMARY -->
+        <section>
+            <h2 class="section-title"><span class="num">1.</span>Financial Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-panel">
+                    <div class="metric"><strong>INITIAL BALANCE:</strong><span class="value">{{ initial_balance|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>TOTAL CONTRIBUTIONS:</strong><span class="value">{{ total_contributions|default:0|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>PENALTIES INCURRED THIS MONTH:</strong><span class="value">{{ total_penalties_incurred|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>LOAN REPAYMENTS:</strong><span class="value">{{ total_repayments|default:0|floatformat:0|intcomma }} Frw</span></div>
+                </div>
+                <div class="summary-panel">
+                    <div class="metric"><strong>LOANS DISBURSED:</strong><span class="value">{{ total_loans_disbursed|default:0|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>OLD PENALTIES COLLECTED THIS MONTH:</strong><span class="value">{{ old_penalties_collected|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>UNPAID PENALTIES:</strong><span class="value">{{ unpaid_penalties|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>CLOSING CASH / BANK BALANCE:</strong><span class="value">{{ closing_balance|floatformat:0|intcomma }} Frw</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. MONTHLY INCOME AND EXPENSES / 3. CONTRIBUTIONS -->
+        <div class="columns">
+            <section class="section">
+                <h2 class="section-title"><span class="num">2.</span>Monthly Income and Expenses</h2>
+                <table>
+                    <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Opening balance from previous month</td><td>{{ initial_balance|floatformat:0|intcomma }} </td></tr>
+                        <tr><td>Member contributions received</td><td>{{ total_contributions|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Loan repayments received</td><td>{{ total_repayments|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Penalties received</td><td>{{ total_penalty_payments|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>TOTAL MONTHLY INFLOWS</td><td>{{ total_monthly_inflows|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>New loans disbursed</td><td>({{ total_loans_disbursed|default:0|floatformat:0|intcomma }})</td></tr>
+                        <tr><td>Expenses</td><td class="not-calculated">0 </td></tr>
+                        <tr class="total"><td>MONTHLY NET CASH FLOW*</td><td>{{ monthly_net_cash_flow|default:0|floatformat:0|intcomma }}</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title"><span class="num">3.</span>Monthly Contributions Report</h2>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Result</th></tr></thead>
+                    <tbody>
+                        <tr><td>Total registered members</td><td>{{ total_members|default:0|intcomma }}</td></tr>
+                        <tr><td>Active members</td><td>{{ active_members|default:0|intcomma }}</td></tr>
+                        <tr><td>Members who have not paid</td><td class="text-end">{{ members_who_have_not_paid }}</td></tr>
+                        <tr><td>Outstanding old contributions </td><td>{{ outstanding_old_contributions|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr><td>Expected contributions (This month)</td><td>{{ expected_contributions|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr class="total"><td>Total contributions due</td><td>{{ total_contributions_due|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr><td>Contributions received</td><td>{{ total_contributions|default:0|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr class="total"><td>Outstanding contributions</td><td>{{ outstanding_contributions|floatformat:0|intcomma }} Frw</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- 4. LOAN PORTFOLIO / 5. PENALTIES -->
+        <div class="columns">
+            <section class="section">
+                <h2 class="section-title"><span class="num">4.</span>Loan Portfolio Report</h2>
+                <table>
+                    <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Opening loan balance</td><td>{{ opening_loan_balance|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>New loans disbursed this month</td><td>{{ new_loans_disbursed|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Loan principal repaid</td><td>{{ total_repayments|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>Current outstanding loan balance</td><td>{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td></tr>
+                    </tbody>
+                </table>
+                
+            </section>
+
+            <section class="section">
+                <h2 class="section-title"><span class="num">5.</span>Penalties Report</h2>
+                <table>
+                    <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Old unpaid penalties</td><td class="text-end">{{ old_unpaid_penalties|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Penalties assessed during the month</td><td class="text-end">{{ penalties_assessed_amount|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>Total penalties due</td><td class="text-end">{{ total_penalties_due|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Penalties collected</td><td class="text-end">{{ penalties_collected|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>Outstanding penalties</td><td class="text-end">{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <!-- 6. FINANCIAL POSITION / 7. RECOMMENDATIONS -->
+        <div class="columns">
+            <section class="section">
+                <h2 class="section-title"><span class="num">6.</span>Financial Position at Month-End</h2>
+                <table>
+                    <thead><tr><th>Item</th><th>Amount (Frw)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Closing cash and bank balance</td><td>{{ closing_balance|floatformat:0|intcomma }}</td></tr>
+                        <tr><td> Current outstanding loans</td><td>{{ outstanding_loans|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td> Current outstanding Contributions</td><td>{{ outstanding_contributions|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Outstanding penalties</td><td>{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>NET FINANCIAL POSITION</td><td>{{ net_financial_position|floatformat:0|intcomma }}</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title"><span class="num">7.</span>Observations &amp; Recommendations</h2>
+                <div class="recommendations">
+                    <div class="recommendation"><span class="check">✓</span><span>Follow up with members who have outstanding monthly contributions.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span>Monitor overdue loans and agree on repayment follow-up actions.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span>Reconcile the figures in the system with bank statements and cash records.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span>Ensure that all transactions have supporting records and approval where required.</span></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="report-note">
+            <strong>* Note:</strong> This report reflects the financial records available and verified as of the reporting date. 
+            The complete monthly report is available from the 6th day of the following month to allow sufficient time for verification and reconciliation of all financial transactions. 
+            Any discrepancies should be reported to the responsible committee for review and correction.
+        </div>
+
+        <footer>
+            SMART SAVING GROUP &nbsp; | &nbsp; Monthly Financial Report
+            &nbsp; | &nbsp; {{ selected_month|date:"F Y" }}
+        </footer>
+    </main>
+</div>
+{% endblock %}

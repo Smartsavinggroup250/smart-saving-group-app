@@ -1,10 +1,24 @@
-{% extends "base.html" %}
 
+{% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
 
-    <h2>Monthly Contribution</h2>
+    <h2>
+        {% if edit_mode %}
+            Edit Rejected Contribution
+        {% else %}
+            Monthly Contribution
+        {% endif %}
+    </h2>
+
+    {% if edit_mode and contribution.rejection_reason %}
+        <div class="alert alert-danger mt-3">
+            <strong>Reason for rejection:</strong>
+            {{ contribution.rejection_reason }}
+        </div>
+    {% endif %}
 
     <div class="card mt-3">
         <div class="card-body">
@@ -14,20 +28,18 @@
 
                 {{ form.as_p }}
 
-                <button
-                    type="submit"
-                    class="btn btn-primary"
-                >
-                    Submit Contribution
+                <button type="submit" class="btn btn-primary">
+                    {% if edit_mode %}
+                        Correct and Resubmit
+                    {% else %}
+                        Submit Contribution
+                    {% endif %}
                 </button>
 
-                <a
-                    href="{% url 'contribution_list' %}"
-                    class="btn btn-secondary"
-                >
+                <a href="{% url 'contribution_list' %}"
+                   class="btn btn-secondary">
                     Cancel
                 </a>
-
             </form>
 
         </div>

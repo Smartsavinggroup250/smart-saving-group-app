@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <div class="ssg-page-title">
@@ -34,6 +34,7 @@
                         <th>Amount Repaid</th>
                         <th>Remaining Balance</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
@@ -52,23 +53,23 @@
                         </td>
 
                         <td>
-                            {{ loan.principal_amount|floatformat:2 }} RWF
+                            {{ loan.principal_amount|floatformat:2|intcomma }} RWF
                         </td>
 
                         <td>
-                            {{ loan.total_interest|floatformat:2 }} RWF
+                            {{ loan.total_interest|floatformat:2|intcomma }} RWF
                         </td>
 
                         <td>
-                            {{ loan.total_payable|floatformat:2 }} RWF
+                            {{ loan.total_payable|floatformat:2|intcomma }} RWF
                         </td>
 
                         <td>
-                            {{ loan.total_repaid|floatformat:2 }} RWF
+                            {{ loan.total_repaid|floatformat:2|intcomma }} RWF
                         </td>
 
                         <td>
-                            {{ loan.remaining_balance|floatformat:2 }} RWF
+                            {{ loan.remaining_balance|floatformat:2|intcomma }} RWF
                         </td>
 
                         <td>
@@ -93,6 +94,25 @@
 
                             {% endif %}
 
+                        </td>
+
+                        <td>
+                            {% if loan.status == "APPROVED" %}
+                                <form
+                                    method="post"
+                                    action="{% url 'loan_disburse' loan.id %}"
+                                    onsubmit="return confirm('Are you sure you want to disburse this loan?');"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        Disburse
+                                    </button>
+                                </form>
+                            {% elif loan.status == "DISBURSED" %}
+                                <span class="text-success">Already disbursed</span>
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
                     </tr>

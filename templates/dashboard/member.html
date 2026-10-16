@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 
 <div class="ssg-page-title">
@@ -18,7 +19,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_savings|floatformat:0 }}
+            {{ total_savings|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -32,7 +33,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_profits|floatformat:0 }}
+            {{ total_profits|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -46,7 +47,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ total_penalties|floatformat:0 }}
+            {{ total_penalties|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -64,7 +65,7 @@
         </div>
 
         <small>
-            {{ outstanding_loans|floatformat:0 }} RWF outstanding
+            {{ outstanding_loans|floatformat:1|intcomma }} RWF outstanding
         </small>
     </div>
 
@@ -72,11 +73,11 @@
     <!-- 5. GROUP BALANCE -->
     <div class="ssg-stat-card">
         <div class="ssg-stat-title">
-            Group Balance
+            Available Group Balance
         </div>
 
         <div class="ssg-stat-value">
-            {{ group_balance|floatformat:0 }}
+            {{ group_balance|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -90,7 +91,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ my_savings|floatformat:0 }}
+            {{ my_savings|floatformat:1|intcomma }}
         </div>
 
         <small>RWF</small>
@@ -104,7 +105,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ my_unpaid_penalties|floatformat:0 }}
+            {{ my_unpaid_penalties|floatformat:1|intcomma }}
         </div>
 
         <small>
@@ -120,7 +121,7 @@
         </div>
 
         <div class="ssg-stat-value">
-            {{ my_loan_balance|floatformat:0 }}
+            {{ my_loan_balance|floatformat:1|intcomma }}
         </div>
 
         <small>

@@ -46,4 +46,15 @@ urlpatterns = [
         views.active_loan_members,
         name="active_loan_members",
     ),
+    path(
+    "<int:pk>/edit/",
+    views.loan_edit,
+    name="loan_edit",
+    ),
+
+    path(
+        "<int:pk>/delete/",
+        views.loan_delete,
+        name="loan_delete",
+    ),
 ]

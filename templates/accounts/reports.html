@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block title %}Reports - Smart Saving Group{% endblock %}
 
 {% block page_title %}Reports{% endblock %}
@@ -78,7 +78,7 @@ All approved transactions
 
                         <td class="text-end">
                             <strong>
-                                {{ transaction.amount|floatformat:2 }}
+                                {{ transaction.amount|floatformat:1|intcomma }}
                             </strong>
                         </td>
 

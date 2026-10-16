@@ -45,4 +45,16 @@ urlpatterns = [
         views.paid_contribution_list,
         name="paid_contribution_list",
     ),
+    
+    path(
+        "contributions/<int:pk>/edit/",
+        views.contribution_edit,
+        name="contribution_edit",
+    ),
+
+    path(
+        "contributions/<int:pk>/delete/",
+        views.contribution_delete,
+        name="contribution_delete",
+    ),
 ]

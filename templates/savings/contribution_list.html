@@ -1,82 +1,121 @@
-{% extends "base.html" %}
 
+{% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center">
-
         <h2>My Contributions</h2>
 
-        <a
-            href="{% url 'contribution_create' %}"
-            class="btn btn-primary"
-        >
+        <a href="{% url 'contribution_create' %}"
+           class="btn btn-primary">
             New Contribution
         </a>
-
     </div>
 
     <div class="card mt-3">
-
         <div class="card-body">
 
-            <table class="table table-bordered">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
 
-                <thead>
-                    <tr>
-                        <th>Month</th>
-                        <th>Amount</th>
-                        <th>Payment Method</th>
-                        <th>Reference</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Reference</th>
+                            <th>Status</th>
+                            <th>Rejection Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                <tbody>
+                    <tbody>
+                        {% for contribution in contributions %}
+                        <tr>
+                            <td>
+                                {{ contribution.month|date:"F Y" }}
+                            </td>
 
-                    {% for contribution in contributions %}
+                            <td>
+                                {{ contribution.amount|intcomma }} RWF
+                            </td>
 
-                    <tr>
+                            <td>
+                                {{ contribution.get_payment_method_display }}
+                            </td>
 
-                        <td>
-                            {{ contribution.month|date:"F Y" }}
-                        </td>
+                            <td>
+                                {{ contribution.reference|default:"-" }}
+                            </td>
 
-                        <td>
-                            {{ contribution.amount }}
-                        </td>
+                            <td>
+                                {% if contribution.status == "REJECTED" %}
+                                    <span class="badge bg-danger">
+                                        Rejected
+                                    </span>
+                                {% elif contribution.status == "APPROVED" %}
+                                    <span class="badge bg-success">
+                                        Approved
+                                    </span>
+                                {% elif contribution.status == "PENDING" %}
+                                    <span class="badge bg-warning text-dark">
+                                        Pending
+                                    </span>
+                                {% else %}
+                                    {{ contribution.get_status_display }}
+                                {% endif %}
+                            </td>
 
-                        <td>
-                            {{ contribution.get_payment_method_display }}
-                        </td>
+                            <td>
+                                {% if contribution.status == "REJECTED" %}
+                                    {{ contribution.rejection_reason|default:"No reason provided" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
 
-                        <td>
-                            {{ contribution.reference|default:"-" }}
-                        </td>
+                            <td>
+                                {% if contribution.status == "REJECTED" %}
 
-                        <td>
-                            {{ contribution.get_status_display }}
-                        </td>
+                                    <a href="{% url 'contribution_edit' contribution.pk %}"
+                                       class="btn btn-sm btn-warning mb-1">
+                                        Edit
+                                    </a>
 
-                    </tr>
+                                    <form method="post"
+                                          action="{% url 'contribution_delete' contribution.pk %}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to permanently delete this rejected contribution?');">
+                                        {% csrf_token %}
 
-                    {% empty %}
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger mb-1">
+                                            Delete
+                                        </button>
+                                    </form>
 
-                    <tr>
-                        <td colspan="5">
-                            No contributions found.
-                        </td>
-                    </tr>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
 
-                    {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                No contributions found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
 
-                </tbody>
-
-            </table>
+                </table>
+            </div>
 
         </div>
-
     </div>
 
 </div>

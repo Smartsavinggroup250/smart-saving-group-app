@@ -4,7 +4,10 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpResponseForbidden
+from django.http import (
+    HttpResponseForbidden,
+    HttpResponseNotAllowed,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -92,6 +95,107 @@ def contribution_create(request):
         "savings/contribution_form.html",
         {"form": form},
     )
+
+
+@login_required
+def contribution_edit(request, pk):
+    member = getattr(request.user, "member", None)
+
+    if not member:
+        return HttpResponseForbidden(
+            "You do not have a member profile."
+        )
+
+    contribution = get_object_or_404(
+        MonthlyContribution,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    if request.method == "POST":
+        form = MonthlyContributionForm(
+            request.POST,
+            instance=contribution,
+        )
+
+        if form.is_valid():
+            contribution = form.save(commit=False)
+            contribution.status = "PENDING"
+            contribution.rejection_reason = ""
+            contribution.approved_by = None
+            contribution.approved_at = None
+            contribution.requested_by = request.user
+            contribution.save()
+
+            notify_member(
+                member,
+                title="Contribution Resubmitted",
+                message=(
+                    f"Your corrected contribution for "
+                    f"{contribution.month:%B %Y} has been resubmitted "
+                    "and is awaiting approval."
+                ),
+                notification_type="CONTRIBUTION",
+            )
+
+            notify_admins_and_treasurers(
+                title="Contribution Resubmitted",
+                message=(
+                    f"{request.user.get_full_name() or request.user.username} "
+                    f"has resubmitted a contribution of "
+                    f"{contribution.amount:,.2f} RWF for "
+                    f"{contribution.month:%B %Y}. Please review it."
+                ),
+                notification_type="CONTRIBUTION",
+            )
+
+            messages.success(
+                request,
+                "Contribution corrected and resubmitted successfully.",
+            )
+            return redirect("contribution_list")
+    else:
+        form = MonthlyContributionForm(instance=contribution)
+
+    return render(
+        request,
+        "savings/contribution_form.html",
+        {
+            "form": form,
+            "edit_mode": True,
+            "contribution": contribution,
+        },
+    )
+
+
+@login_required
+def contribution_delete(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    member = getattr(request.user, "member", None)
+
+    if not member:
+        return HttpResponseForbidden(
+            "You do not have a member profile."
+        )
+
+    contribution = get_object_or_404(
+        MonthlyContribution,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    contribution.delete()
+
+    messages.success(
+        request,
+        "Rejected contribution deleted successfully.",
+    )
+    return redirect("contribution_list")
+
     
 @login_required
 def contribution_list(request):

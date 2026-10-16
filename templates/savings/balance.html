@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
@@ -13,7 +13,7 @@
             <h5>Current Savings Balance</h5>
 
             <h2>
-                RWF {{ balance|floatformat:2 }}
+                RWF {{ balance|floatformat:2|intcomma }}
             </h2>
 
         </div>

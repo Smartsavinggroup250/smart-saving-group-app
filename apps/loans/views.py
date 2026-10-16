@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from apps.members.models import Member
 from django.utils import timezone
 from django.core.paginator import Paginator
 from apps.notifications.services import (
@@ -489,3 +491,120 @@ def active_loan_members(request):
             "page_obj": page_obj,
         },
     )
+    
+
+@login_required
+def loan_edit(request, pk):
+    member = get_object_or_404(
+        Member,
+        user=request.user,
+    )
+
+    loan = get_object_or_404(
+        Loan,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    if has_active_loan(member):
+        messages.error(
+            request,
+            "You already have an active loan. "
+            "You cannot resubmit this application now.",
+        )
+        return redirect("loan_list")
+
+    if request.method == "POST":
+        form = LoanApplicationForm(
+            request.POST,
+            instance=loan,
+        )
+
+        if form.is_valid():
+            loan = form.save(commit=False)
+
+            # Recalculate the loan type and interest rate.
+            loan.loan_type = get_loan_type(
+                loan.requested_amount
+            )
+            loan.interest_rate = get_interest_rate(
+                loan.loan_type
+            )
+
+            # Reset the rejected application for a new review.
+            loan.status = "PENDING"
+            loan.approved_amount = None
+            loan.approved_by = None
+            loan.approved_at = None
+            loan.rejection_reason = ""
+
+            loan.save()
+
+            notify_member(
+                member,
+                title="Loan Application Resubmitted",
+                message=(
+                    f"Your corrected loan application "
+                    f"for {loan.requested_amount:,.2f} RWF "
+                    f"has been resubmitted and is awaiting review."
+                ),
+                notification_type="LOAN",
+            )
+
+            notify_admins_and_treasurers(
+                title="Corrected Loan Application",
+                message=(
+                    f"{request.user.get_full_name() or request.user.username} "
+                    f"resubmitted loan application #{loan.id}. "
+                    f"Please review it."
+                ),
+                notification_type="LOAN",
+            )
+
+            messages.success(
+                request,
+                "Loan application corrected and resubmitted "
+                "for approval.",
+            )
+            return redirect("loan_list")
+
+    else:
+        form = LoanApplicationForm(instance=loan)
+
+    return render(
+        request,
+        "loans/loan_form.html",
+        {
+            "form": form,
+            "loan": loan,
+            "edit_mode": True,
+        },
+    )
+
+
+@login_required
+def loan_delete(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    member = get_object_or_404(
+        Member,
+        user=request.user,
+    )
+
+    loan = get_object_or_404(
+        Loan,
+        pk=pk,
+        member=member,
+        status="REJECTED",
+    )
+
+    loan.delete()
+
+    messages.success(
+        request,
+        "Rejected loan application deleted successfully.",
+    )
+    return redirect("loan_list")
+    

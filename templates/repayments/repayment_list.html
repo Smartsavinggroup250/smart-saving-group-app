@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
 <div class="container mt-4">
@@ -41,6 +41,7 @@
                                 <th>Payment Method</th>
                                 <th>Reference</th>
                                 <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
 
@@ -59,7 +60,7 @@
                                     </td>
 
                                     <td>
-                                        {{ repayment.amount|floatformat:2 }}
+                                        {{ repayment.amount|floatformat:2|intcomma }}
                                         RWF
                                     </td>
 
@@ -71,34 +72,57 @@
                                         {{ repayment.reference }}
                                     </td>
 
+                                    
                                     <td>
-
                                         {% if repayment.status == "APPROVED" %}
-
-                                            <span class="badge bg-success">
-                                                Approved
-                                            </span>
+                                            <span class="badge bg-success">Approved</span>
 
                                         {% elif repayment.status == "PENDING" %}
-
-                                            <span class="badge bg-warning text-dark">
-                                                Pending
-                                            </span>
+                                            <span class="badge bg-warning text-dark">Pending</span>
 
                                         {% elif repayment.status == "REJECTED" %}
-
-                                            <span class="badge bg-danger">
-                                                Rejected
-                                            </span>
+                                            <span class="badge bg-danger">Rejected</span>
 
                                         {% else %}
-
                                             <span class="badge bg-secondary">
                                                 {{ repayment.get_status_display }}
                                             </span>
-
                                         {% endif %}
+                                    </td>
 
+                                    <td>
+                                        {% if repayment.status == "REJECTED" %}
+
+                                            <div class="text-danger small mb-2">
+                                                <strong>Reason:</strong>
+                                                {{ repayment.rejection_reason|default:"No reason provided" }}
+                                            </div>
+
+                                            <a
+                                                href="{% url 'repayment_edit' repayment.id %}"
+                                                class="btn btn-sm btn-warning mb-1"
+                                            >
+                                                Edit
+                                            </a>
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'repayment_delete' repayment.id %}"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Delete this rejected repayment?');"
+                                            >
+                                                {% csrf_token %}
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-danger mb-1"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
+
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
                                     </td>
 
                                 </tr>
