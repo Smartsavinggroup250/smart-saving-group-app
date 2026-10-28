@@ -182,6 +182,48 @@
             margin-bottom: 0;
         }
 
+
+         /* APPROVAL SIGNATURES */
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            page-break-inside: avoid;
+        }
+        .signatures-table td {
+            width: 33.333%;
+            border: none;
+            padding: 3px 10px;
+            text-align: center;
+            vertical-align: top;
+            font-size: 8pt;
+        }
+
+        .signature-heading {
+            font-weight: bold;
+            color: #0752a0;
+            margin-bottom: 2px;
+        }
+
+        .signature-role {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        
+        .signature-name {
+            font-weight: bold;
+        }
+
+        .signature-image {
+            width: 110px;
+            height: 35px;
+            display: block;
+            margin: 4px auto;
+        }
+
         /* NOTE AND FOOTER */
         .note {
             border-left: 3px solid #0878ca;
@@ -519,22 +561,14 @@
                 </div>
 
                 <div class="recommendations">
-                    <p>
-                        * Follow up with members who have outstanding monthly
-                        contributions.
-                    </p>
-                    <p>
-                        * Monitor overdue loans and agree on repayment
-                        follow-up actions.
-                    </p>
-                    <p>
-                        * Reconcile the figures in the system with bank
-                        statements and cash records.
-                    </p>
-                    <p>
-                        * Ensure that all transactions have supporting
-                        records and required approvals.
-                    </p>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Save Consistently</strong>: Pay monthly shares on time.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Repay Loans on Time</strong>: Honor all loan agreements.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Practice Financial Discipline</strong>: Use savings and loans wisely.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Promote Transparency</strong>: Ensure honesty and accountability.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Attend Meetings</strong>: Participate actively in group activities.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Respect Group Rules</strong>: Follow all agreed policies and regulations.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Promote Unity</strong>: Work together for the growth and success of Smart Saving Group.</span></div>
+                    <div class="recommendation"><span class="check">✓</span><span><strong>Share Ideas</strong>: Contribute innovative ideas to improve the group.</span></div>
                 </div>
             </td>
         </tr>
@@ -548,6 +582,46 @@
         time for verification and reconciliation. Any discrepancies should
         be reported to the responsible committee for review and correction.
     </div>
+
+    <!-- APPROVAL SIGNATURES: sign above each name -->
+    <table class="signatures-table">
+        <tr>
+            <td>
+                <div class="signature-heading">Prepared by:</div>
+                <div class="signature-role">Head of Finance</div>
+                
+                <img 
+                    src="{% static 'images/signatures/clementine_signature.png' %}"
+                    alt="Clementine signature"
+                    class="signature-image"
+                    style="width:110px; height:40px;"
+                >
+                <div class="signature-name">Mukeshimana Clementine</div>
+            </td>
+            <td>
+                <div class="signature-heading">Verified by:</div>
+                <div class="signature-role">Auditor</div>
+                <img 
+                    src="{% static 'images/signatures/aimable_signature.png' %}"
+                    alt="Aimable signature"
+                    class="signature-image"
+                    style="width:110px; height:40px;"
+                >
+                <div class="signature-name">HABIMANA Aimable</div>
+            </td>
+            <td>
+                <div class="signature-heading">Approved by:</div>
+                <div class="signature-role">President</div>
+                <img 
+                    src="{% static 'images/signatures/michel_signature.png' %}"
+                    alt="Michel signature"
+                    class="signature-image"
+                    style="width:110px; height:40px;"
+                >
+                <div class="signature-name">UWIRINGIYIMANA Michel</div>
+            </td>
+        </tr>
+    </table>
 
     <!-- FOOTER -->
     <div class="footer">

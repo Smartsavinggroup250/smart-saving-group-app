@@ -1033,21 +1033,40 @@ def monthly_report(request):
 
 
 def link_callback(uri, rel):
-    uri = unquote(uri)
+    from urllib.parse import unquote, urlparse
+    import os
+    from django.conf import settings
+    from django.contrib.staticfiles import finders
 
-    if uri.startswith(settings.STATIC_URL):
-        relative_path = uri.replace(
-            settings.STATIC_URL, "", 1
-        )
+    uri = unquote(uri)
+    parsed_uri = urlparse(uri)
+    uri_path = unquote(parsed_uri.path).lstrip("/")
+
+    # Shaka static files, harimo signatures na logo.
+    static_url = settings.STATIC_URL.strip("/")
+
+    if uri_path.startswith(static_url + "/"):
+        relative_path = uri_path[len(static_url) + 1:]
+
         path = finders.find(relative_path)
 
         if path:
             return os.path.abspath(path)
 
-    if settings.MEDIA_URL and uri.startswith(settings.MEDIA_URL):
-        relative_path = uri.replace(
-            settings.MEDIA_URL, "", 1
+        collected_path = os.path.join(
+            settings.STATIC_ROOT,
+            relative_path,
         )
+
+        if os.path.isfile(collected_path):
+            return os.path.abspath(collected_path)
+
+    # Shaka media files niba zihari.
+    media_url = settings.MEDIA_URL.strip("/")
+
+    if media_url and uri_path.startswith(media_url + "/"):
+        relative_path = uri_path[len(media_url) + 1:]
+
         path = os.path.join(
             settings.MEDIA_ROOT,
             relative_path,
@@ -1057,5 +1076,3 @@ def link_callback(uri, rel):
             return os.path.abspath(path)
 
     return uri
-
-        
