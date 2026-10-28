@@ -1,202 +1,572 @@
 {% extends "base.html" %}
 {% load humanize %}
+
 {% block title %}
 Admin Dashboard - Smart Saving Group
 {% endblock %}
 
 {% block content %}
 
-<div class="ssg-page-title", style="font-family: Cambria, serif;">
-    <i class="fas fa-handshake mr-2"></i> <h4 style="display: inline;">Hello, <strong>{{ request.user.first_name|default:request.user.username }}</strong> and welcome!
-</div>
-<p style="font-family: Cambria, serif; color: #198754;">
-   Your financial activities, savings, and loans are all in one place. Let's make every contribution count.
-</p>
+<style>
+    /* ADMIN DASHBOARD */
+    .ssg-admin-dashboard {
+        font-family: Cambria, Georgia, serif;
+        color: #263447;
+    }
 
+    .ssg-admin-dashboard .ssg-page-title {
+        margin-bottom: 10px;
+        color: #198754;
+    }
 
-<div class="ssg-stat-grid">
+    .ssg-admin-dashboard .ssg-welcome-text {
+        color: #64748B;
+        margin-bottom: 25px;
+        font-size: 1.02rem;
+    }
 
-    <!-- 1. TOTAL SAVINGS -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Total Savings
-        </div>
+    /* STATISTICS GRID */
+    .ssg-admin-dashboard .ssg-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+    }
 
-        <div class="ssg-stat-value">
-            {{ total_savings|floatformat:1|intcomma }}
-        </div>
+    /* BASE STAT CARD */
+    .ssg-admin-dashboard .ssg-stat-card {
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        min-height: 165px;
+        padding: 23px 21px;
+        border: 1px solid rgba(30, 41, 59, 0.06);
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.045);
+        transition: transform 0.22s ease,
+                    box-shadow 0.22s ease;
+    }
 
-        <small>RWF</small>
+    .ssg-admin-dashboard .ssg-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10);
+    }
+
+    .ssg-admin-dashboard .ssg-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .ssg-admin-dashboard .ssg-stat-title {
+        font-size: 0.94rem;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .ssg-admin-dashboard .ssg-stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        min-width: 43px;
+        border-radius: 12px;
+        font-size: 1.15rem;
+    }
+
+    .ssg-admin-dashboard .ssg-stat-value {
+        margin-bottom: 7px;
+        font-family: Cambria, Georgia, serif;
+        font-size: clamp(1.35rem, 1.8vw, 1.8rem);
+        font-weight: 700;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
+        overflow-wrap: anywhere;
+    }
+
+    .ssg-admin-dashboard .ssg-stat-card small {
+        display: block;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        opacity: 0.88;
+    }
+
+    /* 1. TOTAL SAVINGS */
+    .ssg-admin-dashboard .card-savings {
+        background: #E5F5EC;
+        color: #14532D;
+        border-bottom: 4px solid #35A66B;
+    }
+
+    .ssg-admin-dashboard .card-savings .ssg-stat-icon {
+        background: #C8EBD7;
+        color: #16804A;
+    }
+
+    /* 2. TOTAL PROFITS */
+    .ssg-admin-dashboard .card-profits {
+        background: #E8EEFF;
+        color: #293F91;
+        border-bottom: 4px solid #6685E8;
+    }
+
+    .ssg-admin-dashboard .card-profits .ssg-stat-icon {
+        background: #D4DFFF;
+        color: #405FC4;
+    }
+
+    /* 3. TOTAL PENALTIES */
+    .ssg-admin-dashboard .card-penalties {
+        background: #FFF0E5;
+        color: #873D15;
+        border-bottom: 4px solid #E99A63;
+    }
+
+    .ssg-admin-dashboard .card-penalties .ssg-stat-icon {
+        background: #FFE0C9;
+        color: #B95D22;
+    }
+
+    /* 4. ACTIVE LOANS */
+    .ssg-admin-dashboard .card-loans {
+        background: #F0E8FF;
+        color: #542C91;
+        border-bottom: 4px solid #A17BE0;
+    }
+
+    .ssg-admin-dashboard .card-loans .ssg-stat-icon {
+        background: #E2D2FF;
+        color: #7546B8;
+    }
+
+    /* 5. GROUP BALANCE */
+    .ssg-admin-dashboard .card-balance {
+        background: #DDF5F3;
+        color: #075E59;
+        border-bottom: 4px solid #42B9B0;
+    }
+
+    .ssg-admin-dashboard .card-balance .ssg-stat-icon {
+        background: #C3EBE7;
+        color: #087E78;
+    }
+
+    /* 6. UNPAID PENALTIES */
+    .ssg-admin-dashboard .card-unpaid {
+        background: #FFF0F0;
+        color: #922B34;
+        border-bottom: 4px solid #E58A91;
+    }
+
+    .ssg-admin-dashboard .card-unpaid .ssg-stat-icon {
+        background: #FFDCDD;
+        color: #C23B45;
+    }
+
+    /* 7. TOTAL MEMBERS */
+    .ssg-admin-dashboard .card-members {
+        background: #E8F4FF;
+        color: #194B7A;
+        border-bottom: 4px solid #67A9E8;
+    }
+
+    .ssg-admin-dashboard .card-members .ssg-stat-icon {
+        background: #D0E9FF;
+        color: #2868A8;
+    }
+
+    /* 8. TOTAL SHARES */
+    .ssg-admin-dashboard .card-shares {
+        background: #F8F0DF;
+        color: #76551B;
+        border-bottom: 4px solid #D6B568;
+    }
+
+    .ssg-admin-dashboard .card-shares .ssg-stat-icon {
+        background: #F0E2BE;
+        color: #987020;
+    }
+
+    /* QUICK ACTIONS PANEL */
+    .ssg-admin-dashboard .ssg-card {
+        margin-top: 30px;
+        overflow: hidden;
+        background: #FFFFFF;
+        border: 1px solid #E8EDF2;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.045);
+    }
+
+    .ssg-admin-dashboard .ssg-card-header {
+        padding: 18px 22px;
+        background: #F7FAF8;
+        border-bottom: 1px solid #E5EDE7;
+    }
+
+    .ssg-admin-dashboard .ssg-card-header h3 {
+        margin: 0;
+        color: #198754;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .ssg-admin-dashboard .ssg-card-body {
+        padding: 22px;
+    }
+
+    .ssg-admin-dashboard .ssg-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .ssg-admin-dashboard .ssg-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        width: 100%;
+        min-height: 49px;
+        padding: 12px 14px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-family: Cambria, Georgia, serif;
+        font-size: 0.92rem;
+        font-weight: 700;
+        line-height: 1.4;
+        text-align: center;
+        text-decoration: none;
+        transition: transform 0.2s ease,
+                    box-shadow 0.2s ease,
+                    background 0.2s ease;
+    }
+
+    .ssg-admin-dashboard .ssg-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(15, 23, 42, 0.10);
+        text-decoration: none;
+    }
+
+    .ssg-admin-dashboard .ssg-action-btn i {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .ssg-admin-dashboard .action-loans {
+        background: #E8EEFF;
+        color: #344EA5;
+        border-color: #D0DCFF;
+    }
+
+    .ssg-admin-dashboard .action-loans:hover {
+        background: #D8E2FF;
+        color: #263D8A;
+    }
+
+    .ssg-admin-dashboard .action-contributions {
+        background: #E5F5EC;
+        color: #146C43;
+        border-color: #C4E7D2;
+    }
+
+    .ssg-admin-dashboard .action-contributions:hover {
+        background: #D0EEDC;
+        color: #105536;
+    }
+
+    .ssg-admin-dashboard .action-repayments {
+        background: #DDF5F3;
+        color: #08746E;
+        border-color: #BDE8E4;
+    }
+
+    .ssg-admin-dashboard .action-repayments:hover {
+        background: #C9EFEB;
+        color: #075C57;
+    }
+
+    .ssg-admin-dashboard .action-penalties {
+        background: #FFF0E5;
+        color: #A34C1D;
+        border-color: #FFDCC4;
+    }
+
+    .ssg-admin-dashboard .action-penalties:hover {
+        background: #FFE4D2;
+        color: #833B16;
+    }
+
+    .ssg-admin-dashboard .action-paid {
+        background: #E8F4FF;
+        color: #2868A8;
+        border-color: #D0E9FF;
+    }
+
+    .ssg-admin-dashboard .action-paid:hover {
+        background: #D8ECFF;
+        color: #194B7A;
+    }
+
+    .ssg-admin-dashboard .action-member-penalties {
+        background: #FFF0F0;
+        color: #B52F3A;
+        border-color: #FFDCDD;
+    }
+
+    .ssg-admin-dashboard .action-member-penalties:hover {
+        background: #FFE1E2;
+        color: #922B34;
+    }
+
+    .ssg-admin-dashboard .action-active-loans {
+        background: #F0E8FF;
+        color: #7546B8;
+        border-color: #E2D2FF;
+    }
+
+    .ssg-admin-dashboard .action-active-loans:hover {
+        background: #E5D9FF;
+        color: #542C91;
+    }
+
+    /* TABLET */
+    @media (max-width: 1100px) {
+        .ssg-admin-dashboard .ssg-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .ssg-admin-dashboard .ssg-actions-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    /* MOBILE */
+    @media (max-width: 575px) {
+        .ssg-admin-dashboard .ssg-stat-grid,
+        .ssg-admin-dashboard .ssg-actions-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .ssg-admin-dashboard .ssg-stat-card {
+            min-height: 145px;
+            padding: 19px;
+        }
+
+        .ssg-admin-dashboard .ssg-stat-value {
+            font-size: 1.65rem;
+        }
+
+        .ssg-admin-dashboard .ssg-card-body {
+            padding: 16px;
+        }
+    }
+</style>
+
+<div class="ssg-admin-dashboard">
+
+    <!-- WELCOME -->
+    <div class="ssg-page-title">
+        <i class="fas fa-handshake mr-2"></i>
+        <h4 style="display: inline;">
+            Hello
+            <strong>{{ request.user.first_name|default:request.user.username }}</strong>,
+            and welcome to your dashboard!
+        </h4>
     </div>
 
+    <p class="ssg-welcome-text">
+        Your financial activities, savings, and loans are all in one place.
+        Let's make every contribution count.
+    </p>
 
-    <!-- 2. TOTAL PROFITS -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Total Profits
+    <!-- FINANCIAL STATISTICS -->
+    <div class="ssg-stat-grid">
+
+        <!-- 1. TOTAL SAVINGS -->
+        <div class="ssg-stat-card card-savings">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Total Savings</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ total_savings|floatformat:1|intcomma }}
+            </div>
+            <small>RWF</small>
         </div>
 
-        <div class="ssg-stat-value">
-            {{ total_profits|floatformat:1|intcomma }}
+        <!-- 2. TOTAL PROFITS -->
+        <div class="ssg-stat-card card-profits">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Total Profits</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ total_profits|floatformat:1|intcomma }}
+            </div>
+            <small>RWF</small>
         </div>
 
-        <small>RWF</small>
+        <!-- 3. TOTAL PENALTIES -->
+        <div class="ssg-stat-card card-penalties">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Total Penalties</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ total_penalties|floatformat:1|intcomma }}
+            </div>
+            <small>RWF</small>
+        </div>
+
+        <!-- 4. ACTIVE LOANS -->
+        <div class="ssg-stat-card card-loans">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Active Loans</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-landmark"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ active_loans }}
+            </div>
+            <small>
+                {{ outstanding_loans|floatformat:1|intcomma }} RWF outstanding
+            </small>
+        </div>
+
+        <!-- 5. GROUP BALANCE -->
+        <div class="ssg-stat-card card-balance">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Group Balance</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ group_balance|floatformat:1|intcomma }}
+            </div>
+            <small>RWF</small>
+        </div>
+
+        <!-- 6. UNPAID PENALTIES -->
+        <div class="ssg-stat-card card-unpaid">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Unpaid Penalties</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ unpaid_penalty_count }}
+            </div>
+            <small>
+                {{ unpaid_penalties|floatformat:1|intcomma }} RWF unpaid
+            </small>
+        </div>
+
+        <!-- 7. TOTAL MEMBERS -->
+        <div class="ssg-stat-card card-members">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Total Members</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ total_members }}
+            </div>
+            <small>{{ active_members }} active</small>
+        </div>
+
+        <!-- 8. TOTAL SHARES -->
+        <div class="ssg-stat-card card-shares">
+            <div class="ssg-stat-top">
+                <div class="ssg-stat-title">Total Shares</div>
+                <div class="ssg-stat-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+            </div>
+            <div class="ssg-stat-value">
+                {{ total_shares }}
+            </div>
+            <small>Shares</small>
+        </div>
+
     </div>
 
+    <!-- QUICK ACTIONS -->
+    <div class="ssg-card">
 
-    <!-- 3. TOTAL PENALTIES -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Total Penalties
+        <div class="ssg-card-header">
+            <h3>
+                <i class="fas fa-bolt mr-2"></i>
+                Quick Actions
+            </h3>
         </div>
 
-        <div class="ssg-stat-value">
-            {{ total_penalties|floatformat:1|intcomma }}
-        </div>
+        <div class="ssg-card-body">
+            <div class="ssg-actions-grid">
 
-        <small>RWF</small>
-    </div>
-
-
-    <!-- 4. ACTIVE LOANS -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Active Loans
-        </div>
-
-        <div class="ssg-stat-value">
-            {{ active_loans }}
-        </div>
-
-        <small>
-            {{ outstanding_loans|floatformat:1|intcomma }} RWF outstanding
-        </small>
-    </div>
-
-
-    <!-- 5. GROUP BALANCE -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Group Balance
-        </div>
-
-        <div class="ssg-stat-value">
-            {{ group_balance|floatformat:1|intcomma }}
-        </div>
-
-        <small>RWF</small>
-    </div>
-
-
-    <!-- 6. UNPAID PENALTIES -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Unpaid Penalties
-        </div>
-
-        <div class="ssg-stat-value">
-            {{ unpaid_penalty_count }}
-        </div>
-
-        <small>
-            {{ unpaid_penalties|floatformat:1|intcomma }} RWF unpaid
-        </small>
-    </div>
-
-
-    <!-- 7. TOTAL MEMBERS -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Total Members
-        </div>
-
-        <div class="ssg-stat-value">
-            {{ total_members }}
-        </div>
-
-        <small>
-            {{ active_members }} active
-        </small>
-    </div>
-
-
-    <!-- 8. TOTAL SHARES -->
-    <div class="ssg-stat-card">
-        <div class="ssg-stat-title">
-            Total Shares
-        </div>
-
-        <div class="ssg-stat-value">
-            {{ total_shares }}
-        </div>
-
-        <small>Shares</small>
-    </div>
-
-</div>
-
-
-<!-- QUICK ACTIONS -->
-
-<div class="ssg-card mt-4">
-
-    <div class="ssg-card-header">
-        <h3>Quick Actions</h3>
-    </div>
-
-    <div class="ssg-card-body">
-
-        <div class="row g-3">
-
-            <!-- PENDING LOANS -->
-            <div class="col-md-3">
+                <!-- PENDING LOANS -->
                 <a href="{% url 'loan_pending' %}"
-                   class="ssg-btn ssg-btn-primary w-100">
-                    💳 Pending Loans
+                   class="ssg-action-btn action-loans">
+                    <i class="fas fa-credit-card"></i>
+                    Pending Loans
                 </a>
-            </div>
 
-
-            <!-- PENDING CONTRIBUTIONS -->
-            <div class="col-md-3">
+                <!-- PENDING CONTRIBUTIONS -->
                 <a href="{% url 'contribution_pending' %}"
-                   class="ssg-btn ssg-btn-primary w-100">
-                    💰 Pending Contributions
+                   class="ssg-action-btn action-contributions">
+                    <i class="fas fa-coins"></i>
+                    Pending Contributions
                 </a>
-            </div>
 
-
-            <!-- PENDING REPAYMENTS -->
-            <div class="col-md-3">
+                <!-- PENDING REPAYMENTS -->
                 <a href="{% url 'repayment_pending' %}"
-                   class="ssg-btn ssg-btn-primary w-100">
-                    💵 Pending Repayments
+                   class="ssg-action-btn action-repayments">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Pending Repayments
                 </a>
-            </div>
 
-
-            <!-- PENDING PENALTIES -->
-            <div class="col-md-3">
+                <!-- PENDING PENALTIES -->
                 <a href="{% url 'penalty_payment_pending' %}"
-                   class="ssg-btn ssg-btn-gold w-100">
-                    ⚠️ Pending Penalties
+                   class="ssg-action-btn action-penalties">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Pending Penalties
                 </a>
+
+                <!-- PAID CONTRIBUTIONS -->
+                <a href="{% url 'paid_contribution_list' %}"
+                   class="ssg-action-btn action-paid">
+                    <i class="fas fa-check-circle"></i>
+                    Paid Contributions
+                </a>
+
+                <!-- MEMBERS WITH PENALTIES -->
+                <a href="{% url 'members_with_penalties' %}"
+                   class="ssg-action-btn action-member-penalties">
+                    <i class="fas fa-user-shield"></i>
+                    Members with Penalties
+                </a>
+
+                <!-- ACTIVE LOAN MEMBERS -->
+                <a href="{% url 'active_loan_members' %}"
+                   class="ssg-action-btn action-active-loans">
+                    <i class="fas fa-clipboard-list"></i>
+                    Active Loans
+                </a>
+
             </div>
-
-            <a href="{% url 'paid_contribution_list' %}" class="ssg-quick-action">
-                <span class="ssg-quick-action-icon">💰</span>
-                <span>Paid Contributions</span>
-            </a>
-
-            <a href="{% url 'members_with_penalties' %}" class="ssg-quick-action">
-                <span class="ssg-quick-action-icon">⚠️</span>
-                <span>Members with Penalties</span>
-            </a>
-
-            <a href="{% url 'active_loan_members' %}" class="ssg-quick-action">
-                <span class="ssg-quick-action-icon">📋</span>
-                <span>Active Loans</span>
-            </a>
         </div>
 
     </div>
