@@ -224,6 +224,11 @@
             margin: 4px auto;
         }
 
+        .signature-space {
+            height: 30px;
+            border-bottom: 1px solid transparent;
+        }
+
         /* NOTE AND FOOTER */
         .note {
             border-left: 3px solid #0878ca;
@@ -589,36 +594,20 @@
             <td>
                 <div class="signature-heading">Prepared by:</div>
                 <div class="signature-role">Head of Finance</div>
-                
-                <img 
-                    src="{% static 'images/signatures/clementine_signature.png' %}"
-                    alt="Clementine signature"
-                    class="signature-image"
-                    style="width:110px; height:40px;"
-                >
                 <div class="signature-name">Mukeshimana Clementine</div>
+                <div class="signature-space"></div>
             </td>
             <td>
                 <div class="signature-heading">Verified by:</div>
-                <div class="signature-role">Auditor</div>
-                <img 
-                    src="{% static 'images/signatures/aimable_signature.png' %}"
-                    alt="Aimable signature"
-                    class="signature-image"
-                    style="width:110px; height:40px;"
-                >
+                <div class="signature-role">Chief Auditor</div>
                 <div class="signature-name">HABIMANA Aimable</div>
+                <div class="signature-space"></div>
             </td>
             <td>
                 <div class="signature-heading">Approved by:</div>
                 <div class="signature-role">President</div>
-                <img 
-                    src="{% static 'images/signatures/michel_signature.png' %}"
-                    alt="Michel signature"
-                    class="signature-image"
-                    style="width:110px; height:40px;"
-                >
                 <div class="signature-name">UWIRINGIYIMANA Michel</div>
+                <div class="signature-space"></div>
             </td>
         </tr>
     </table>
