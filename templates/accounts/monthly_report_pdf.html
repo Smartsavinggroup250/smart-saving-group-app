@@ -1,6 +1,5 @@
-{% load static %}
-{% load static humanize %}
 
+{% load static humanize %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,244 +9,547 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 12mm;
+            margin: 10mm;
         }
 
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 9pt;
-            color: #174b83;
+            font-size: 8.5pt;
+            color: #24364b;
+            line-height: 1.3;
         }
 
-        .header {
-            border-bottom: 4px solid #0878ca;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
+        /* HEADER AND LOGO */
+        .brand-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
         }
 
-        .header h1 {
+        .brand-table td {
+            border: none;
+            padding: 3px;
+            vertical-align: middle;
+        }
+
+        .brand-logo {
+            width: 90px;
+            text-align: center;
+        }
+
+        .brand-logo img {
+            width: 72px;
+            height: 72px;
+        }
+
+        .brand-name {
             color: #0752a0;
             font-size: 22pt;
+            font-weight: bold;
             margin: 0;
         }
 
-        .header h2 {
+        .report-title {
             color: #087a3d;
-            font-size: 16pt;
-            margin: 5px 0;
+            font-size: 15pt;
+            font-weight: bold;
+            margin: 4px 0;
         }
 
         .period {
-            font-size: 10pt;
-            margin-top: 8px;
+            color: #42566c;
+            font-size: 9pt;
+            margin-top: 5px;
         }
 
+        .header-line {
+            border-bottom: 3px solid #0878ca;
+            margin-bottom: 10px;
+        }
+
+        /* INTRODUCTION */
         .intro {
             border: 1px solid #8bcfe9;
             background-color: #eef8ff;
-            padding: 10px;
-            margin-bottom: 15px;
-            line-height: 1.5;
+            padding: 8px;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
+        /* SECTION HEADINGS */
         .section-title {
             background-color: #0878ca;
             color: #ffffff;
-            padding: 7px;
-            font-size: 11pt;
+            padding: 6px;
+            font-size: 9.5pt;
             font-weight: bold;
-            margin: 12px 0 7px;
+            margin: 0 0 5px 0;
         }
 
-        table {
+        /* TWO-COLUMN LAYOUT
+           The spacer column creates visible space between tables. */
+        .layout-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 0;
             margin-bottom: 12px;
         }
 
-        th, td {
-            border: 1px solid #a6d8eb;
-            padding: 6px;
-            text-align: left;
+        .layout-table td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
         }
 
-        th {
+        .layout-table .layout-cell {
+            width: 48%;
+            padding: 0;
+            vertical-align: top;
+        }
+
+        .layout-table .layout-spacer {
+            width: 4%;
+            padding: 0;
+            border: none;
+        }
+
+        /* INNER DATA TABLES */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 0 5px 0;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #c5d9e8;
+            padding: 5px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .data-table th {
             background-color: #e2f4ff;
             color: #0752a0;
+            font-weight: bold;
         }
 
-        .amount {
+        .data-table .amount {
             text-align: right;
         }
 
-        .total td {
+        .data-table .total td {
             background-color: #e5f8e8;
             font-weight: bold;
         }
 
+        /* FINANCIAL SUMMARY TABLES */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .summary-table td {
+            border: 1px solid #c5d9e8;
+            padding: 7px 5px;
+            vertical-align: middle;
+        }
+
         .summary-table td:first-child {
+            width: 63%;
             font-weight: bold;
         }
 
+        .summary-table td.amount {
+            width: 37%;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* RECOMMENDATIONS */
         .recommendations {
             border: 1px solid #8bcfe9;
             padding: 8px;
-            line-height: 1.6;
+            line-height: 1.5;
         }
 
+        .recommendations p {
+            margin: 0 0 7px 0;
+        }
+
+        .recommendations p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* NOTE AND FOOTER */
         .note {
             border-left: 3px solid #0878ca;
             background-color: #eef8ff;
             padding: 8px;
-            margin-top: 12px;
-            line-height: 1.5;
+            margin-top: 8px;
+            line-height: 1.4;
         }
 
         .footer {
             border-top: 2px solid #1686d0;
-            margin-top: 15px;
-            padding-top: 8px;
+            margin-top: 12px;
+            padding-top: 6px;
             text-align: center;
             font-size: 8pt;
+            color: #42566c;
         }
     </style>
 </head>
 
 <body>
-    
-    <img
-        src="{% static 'images/Smart Saving Group Logo1.png' %}"
-        alt="Smart Saving Group Logo"
-        style="width: 80px; height: 80px;"
-    >
 
-    <div class="header">
-        <h1>SMART SAVING GROUP</h1>
-        <h2>MONTHLY FINANCIAL REPORT</h2>
+    <!-- REPORT HEADER -->
+    <table class="brand-table">
+        <tr>
+            <td class="brand-logo">
+                <img
+                    src="{% static 'images/Smart Saving Group Logo1.png' %}"
+                    alt="Smart Saving Group Logo"
+                />
+            </td>
+            <td>
+                <div class="brand-name">SMART SAVING GROUP</div>
+                <div class="report-title">MONTHLY FINANCIAL REPORT</div>
+                <div class="period">
+                    Reporting period:
+                    <strong>{{ selected_month|date:"F Y" }}</strong>
+                    | Currency: Rwandan Francs (Frw)
+                </div>
+            </td>
+        </tr>
+    </table>
 
-        <div class="period">
-            Reporting period:
-            <strong>{{ selected_month|date:"F Y" }}</strong>
-            &nbsp; | &nbsp; Currency: Rwandan Francs (Frw)
-        </div>
-    </div>
+    <div class="header-line"></div>
 
+    <!-- INTRODUCTION -->
     <div class="intro">
-        <strong>INTRODUCTION</strong><br>
+        <strong>INTRODUCTION</strong><br><br>
         This financial report provides an overview of the financial
         performance and activities of Smart Saving Group for the
         reporting period. It summarizes members' savings contributions,
         loans issued, loan repayments, penalties collected, outstanding
         balances, and the group's overall financial position. The report
-        promotes transparency, accountability, and informed decision-making.
+        aims to promote transparency, accountability, and informed
+        decision-making among group members and the management committee.
+        It also serves as a reference for monitoring the group's financial
+        progress and ensuring compliance with its established financial
+        policies and procedures.
     </div>
 
+    <!-- 1. FINANCIAL SUMMARY: TWO TABLES WITH A SPACER -->
     <div class="section-title">1. Financial Summary</div>
 
-    <table class="summary-table">
+    <table class="layout-table">
         <tr>
-            <td>Initial Balance</td>
-            <td class="amount">{{ initial_balance|floatformat:0|intcomma }} Frw</td>
-            <td>Total Contributions</td>
-            <td class="amount">{{ total_contributions|floatformat:0|intcomma }} Frw</td>
+            <td class="layout-cell">
+                <table class="summary-table">
+                    <tr>
+                        <td>Initial Balance</td>
+                        <td class="amount">
+                            {{ initial_balance|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Penalties Incurred This Month</td>
+                        <td class="amount">
+                            {{ total_penalties_incurred|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Loans Disbursed</td>
+                        <td class="amount">
+                            {{ total_loans_disbursed|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Unpaid Penalties</td>
+                        <td class="amount">
+                            {{ unpaid_penalties|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <td class="layout-spacer"></td>
+
+            <td class="layout-cell">
+                <table class="summary-table">
+                    <tr>
+                        <td>Total Contributions</td>
+                        <td class="amount">
+                            {{ total_contributions|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Loan Repayments</td>
+                        <td class="amount">
+                            {{ total_repayments|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Old Penalties Collected</td>
+                        <td class="amount">
+                            {{ old_penalties_collected|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Closing Cash / Bank Balance</td>
+                        <td class="amount">
+                            {{ closing_balance|floatformat:0|intcomma }} Frw
+                        </td>
+                    </tr>
+                </table>
+            </td>
         </tr>
+    </table>
+
+    <!-- 2 AND 3: INCOME/EXPENSES AND CONTRIBUTIONS -->
+    <table class="layout-table">
         <tr>
-            <td>Penalties Incurred This Month</td>
-            <td class="amount">{{ total_penalties_incurred|floatformat:0|intcomma }} Frw</td>
-            <td>Loan Repayments</td>
-            <td class="amount">{{ total_repayments|floatformat:0|intcomma }} Frw</td>
+            <td class="layout-cell">
+                <div class="section-title">
+                    2. Monthly Income and Expenses
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Description</th>
+                        <th class="amount">Amount (Frw)</th>
+                    </tr>
+                    <tr>
+                        <td>Opening balance from previous month</td>
+                        <td class="amount">{{ initial_balance|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Member contributions received</td>
+                        <td class="amount">{{ total_contributions|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Loan repayments received</td>
+                        <td class="amount">{{ total_repayments|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Penalties received</td>
+                        <td class="amount">{{ total_penalty_payments|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Total Monthly Inflows</td>
+                        <td class="amount">{{ total_monthly_inflows|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>New loans disbursed</td>
+                        <td class="amount">({{ total_loans_disbursed|floatformat:0|intcomma }})</td>
+                    </tr>
+                    <tr>
+                        <td>Expenses</td>
+                        <td class="amount">0</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Monthly Net Cash Flow</td>
+                        <td class="amount">{{ monthly_net_cash_flow|floatformat:0|intcomma }}</td>
+                    </tr>
+                </table>
+            </td>
+
+            <td class="layout-spacer"></td>
+
+            <td class="layout-cell">
+                <div class="section-title">
+                    3. Monthly Contributions Report
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Indicator</th>
+                        <th class="amount">Result</th>
+                    </tr>
+                    <tr>
+                        <td>Total registered members</td>
+                        <td class="amount">{{ total_members|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Active members</td>
+                        <td class="amount">{{ active_members|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Members who have not paid</td>
+                        <td class="amount">{{ members_who_have_not_paid }}</td>
+                    </tr>
+                    <tr>
+                        <td>Outstanding old contributions</td>
+                        <td class="amount">{{ outstanding_old_contributions|floatformat:0|intcomma }} Frw</td>
+                    </tr>
+                    <tr>
+                        <td>Expected contributions this month</td>
+                        <td class="amount">{{ expected_contributions|floatformat:0|intcomma }} Frw</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Total contributions due</td>
+                        <td class="amount">{{ total_contributions_due|floatformat:0|intcomma }} Frw</td>
+                    </tr>
+                    <tr>
+                        <td>Contributions received</td>
+                        <td class="amount">{{ total_contributions|floatformat:0|intcomma }} Frw</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Outstanding contributions</td>
+                        <td class="amount">{{ outstanding_contributions|floatformat:0|intcomma }} Frw</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
+    </table>
+
+    <!-- 4 AND 5: LOAN PORTFOLIO AND PENALTIES -->
+    <table class="layout-table">
         <tr>
-            <td>Loans Disbursed</td>
-            <td class="amount">{{ total_loans_disbursed|floatformat:0|intcomma }} Frw</td>
-            <td>Old Penalties Collected</td>
-            <td class="amount">{{ old_penalties_collected|floatformat:0|intcomma }} Frw</td>
+            <td class="layout-cell">
+                <div class="section-title">
+                    4. Loan Portfolio Report
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Description</th>
+                        <th class="amount">Amount (Frw)</th>
+                    </tr>
+                    <tr>
+                        <td>Opening loan balance</td>
+                        <td class="amount">{{ opening_loan_balance|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>New loans disbursed this month</td>
+                        <td class="amount">{{ new_loans_disbursed|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Loan principal repaid</td>
+                        <td class="amount">{{ loan_principal_repaid|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Current outstanding loan balance</td>
+                        <td class="amount">{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td>
+                    </tr>
+                </table>
+            </td>
+
+            <td class="layout-spacer"></td>
+
+            <td class="layout-cell">
+                <div class="section-title">
+                    5. Penalties Report
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Description</th>
+                        <th class="amount">Amount (Frw)</th>
+                    </tr>
+                    <tr>
+                        <td>Old unpaid penalties</td>
+                        <td class="amount">{{ old_unpaid_penalties|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Penalties assessed during the month</td>
+                        <td class="amount">{{ penalties_assessed_amount|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Total penalties due</td>
+                        <td class="amount">{{ total_penalties_due|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Penalties collected</td>
+                        <td class="amount">{{ penalties_collected|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Outstanding penalties</td>
+                        <td class="amount">{{ outstanding_penalties|floatformat:0|intcomma }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
+    </table>
+
+    <!-- 6 AND 7: FINANCIAL POSITION AND RECOMMENDATIONS -->
+    <table class="layout-table">
         <tr>
-            <td>Unpaid Penalties</td>
-            <td class="amount">{{ unpaid_penalties|floatformat:0|intcomma }} Frw</td>
-            <td>Closing Cash / Bank Balance</td>
-            <td class="amount">{{ closing_balance|floatformat:0|intcomma }} Frw</td>
+            <td class="layout-cell">
+                <div class="section-title">
+                    6. Financial Position at Month-End
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Item</th>
+                        <th class="amount">Amount (Frw)</th>
+                    </tr>
+                    <tr>
+                        <td>Closing cash and bank balance</td>
+                        <td class="amount">{{ closing_balance|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Current outstanding loans</td>
+                        <td class="amount">{{ outstanding_loans|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Current outstanding contributions</td>
+                        <td class="amount">{{ outstanding_contributions|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Outstanding penalties</td>
+                        <td class="amount">{{ outstanding_penalties|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Net Financial Position</td>
+                        <td class="amount">{{ net_financial_position|floatformat:0|intcomma }}</td>
+                    </tr>
+                </table>
+            </td>
+
+            <td class="layout-spacer"></td>
+
+            <td class="layout-cell">
+                <div class="section-title">
+                    7. Observations &amp; Recommendations
+                </div>
+
+                <div class="recommendations">
+                    <p>
+                        * Follow up with members who have outstanding monthly
+                        contributions.
+                    </p>
+                    <p>
+                        * Monitor overdue loans and agree on repayment
+                        follow-up actions.
+                    </p>
+                    <p>
+                        * Reconcile the figures in the system with bank
+                        statements and cash records.
+                    </p>
+                    <p>
+                        * Ensure that all transactions have supporting
+                        records and required approvals.
+                    </p>
+                </div>
+            </td>
         </tr>
     </table>
 
-    <div class="section-title">2. Monthly Income and Expenses</div>
-
-    <table>
-        <tr><th>Description</th><th class="amount">Amount (Frw)</th></tr>
-        <tr><td>Opening balance from previous month</td><td class="amount">{{ initial_balance|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Member contributions received</td><td class="amount">{{ total_contributions|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Loan repayments received</td><td class="amount">{{ total_repayments|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Penalties received</td><td class="amount">{{ total_penalty_payments|floatformat:0|intcomma }}</td></tr>
-        <tr class="total"><td>Total Monthly Inflows</td><td class="amount">{{ total_monthly_inflows|floatformat:0|intcomma }}</td></tr>
-        <tr><td>New loans disbursed</td><td class="amount">({{ total_loans_disbursed|floatformat:0|intcomma }})</td></tr>
-        <tr><td>Expenses</td><td class="amount">0</td></tr>
-        <tr class="total"><td>Monthly Net Cash Flow</td><td class="amount">{{ monthly_net_cash_flow|floatformat:0|intcomma }}</td></tr>
-    </table>
-
-    <div class="section-title">3. Monthly Contributions Report</div>
-
-    <table>
-        <tr><th>Indicator</th><th class="amount">Result</th></tr>
-        <tr><td>Total registered members</td><td class="amount">{{ total_members|intcomma }}</td></tr>
-        <tr><td>Active members</td><td class="amount">{{ active_members|intcomma }}</td></tr>
-        <tr><td>Members who have not paid</td><td class="amount">{{ members_who_have_not_paid }}</td></tr>
-        <tr><td>Outstanding old contributions</td><td class="amount">{{ outstanding_old_contributions|floatformat:0|intcomma }} Frw</td></tr>
-        <tr><td>Expected contributions this month</td><td class="amount">{{ expected_contributions|floatformat:0|intcomma }} Frw</td></tr>
-        <tr class="total"><td>Total contributions due</td><td class="amount">{{ total_contributions_due|floatformat:0|intcomma }} Frw</td></tr>
-        <tr><td>Contributions received</td><td class="amount">{{ total_contributions|floatformat:0|intcomma }} Frw</td></tr>
-        <tr class="total"><td>Outstanding contributions</td><td class="amount">{{ outstanding_contributions|floatformat:0|intcomma }} Frw</td></tr>
-    </table>
-
-    <div class="section-title">4. Loan Portfolio Report</div>
-
-    <table>
-        <tr><th>Description</th><th class="amount">Amount (Frw)</th></tr>
-        <tr><td>Opening loan balance</td><td class="amount">{{ opening_loan_balance|floatformat:0|intcomma }}</td></tr>
-        <tr><td>New loans disbursed this month</td><td class="amount">{{ new_loans_disbursed|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Loan principal repaid</td><td class="amount">{{ loan_principal_repaid|floatformat:0|intcomma }}</td></tr>
-        <tr class="total"><td>Current outstanding loan balance</td><td class="amount">{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td></tr>
-    </table>
-
-    <div class="section-title">5. Penalties Report</div>
-
-    <table>
-        <tr><th>Description</th><th class="amount">Amount (Frw)</th></tr>
-        <tr><td>Old unpaid penalties</td><td class="amount">{{ old_unpaid_penalties|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Penalties assessed during the month</td><td class="amount">{{ penalties_assessed_amount|floatformat:0|intcomma }}</td></tr>
-        <tr class="total"><td>Total penalties due</td><td class="amount">{{ total_penalties_due|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Penalties collected</td><td class="amount">{{ penalties_collected|floatformat:0|intcomma }}</td></tr>
-        <tr class="total"><td>Outstanding penalties</td><td class="amount">{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
-    </table>
-
-    <div class="section-title">6. Financial Position at Month-End</div>
-
-    <table>
-        <tr><th>Item</th><th class="amount">Amount (Frw)</th></tr>
-        <tr><td>Closing cash and bank balance</td><td class="amount">{{ closing_balance|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Current outstanding loans</td><td class="amount">{{ outstanding_loans|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Current outstanding contributions</td><td class="amount">{{ outstanding_contributions|floatformat:0|intcomma }}</td></tr>
-        <tr><td>Outstanding penalties</td><td class="amount">{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
-        <tr class="total"><td>Net Financial Position</td><td class="amount">{{ net_financial_position|floatformat:0|intcomma }}</td></tr>
-    </table>
-
-    <div class="section-title">7. Observations and Recommendations</div>
-
-    <div class="recommendations">
-        - Follow up with members who have outstanding monthly contributions.<br>
-        - Monitor overdue loans and agree on repayment follow-up actions.<br>
-        - Reconcile the figures in the system with bank statements and cash records.<br>
-        - Ensure that all transactions have supporting records and required approvals.
-    </div>
-
+    <!-- REPORT NOTE -->
     <div class="note">
-        <strong>Note:</strong> This report reflects the financial records available
-        and verified as of the reporting date. The complete monthly report is
-        available from the 6th day of the following month to allow time for
-        verification and reconciliation. Any discrepancies should be reported
-        to the responsible committee for review and correction.
+        <strong>*Note:</strong> This report reflects the financial records
+        available and verified as of the reporting date. The complete monthly
+        report is available from the 6th day of the following month to allow
+        time for verification and reconciliation. Any discrepancies should
+        be reported to the responsible committee for review and correction.
     </div>
 
+    <!-- FOOTER -->
     <div class="footer">
         SMART SAVING GROUP | Monthly Financial Report |
         {{ selected_month|date:"F Y" }}

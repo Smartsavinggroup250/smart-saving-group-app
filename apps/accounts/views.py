@@ -9,7 +9,6 @@ from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from playwright.sync_api import sync_playwright
 from apps.accounts.models import MonthlyReportBalance
 from apps.members.models import Member
 from apps.savings.models import MonthlyContribution, SavingsTransaction
@@ -25,6 +24,7 @@ from django.conf import settings
 from django.contrib.staticfiles import finders
 from xhtml2pdf import pisa
 import os
+from urllib.parse import unquote
 
 
 
@@ -991,65 +991,33 @@ def monthly_report(request):
     
     if request.GET.get("format") == "pdf":
         template = get_template(
-            "accounts/monthly_report.html"
+            "accounts/monthly_report_pdf.html"
         )
-
         html = template.render(context, request)
-        result = None
-
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
-
-            try:
-                page = browser.new_page(
-                    viewport={
-                        "width": 1440,
-                        "height": 1000,
-                    }
-                )
-
-                # Establish the website origin so static assets
-                # and the logo can load correctly.
-                page.goto(
-                    request.build_absolute_uri("/"),
-                    wait_until="domcontentloaded",
-                )
-
-                page.set_content(
-                    html,
-                    wait_until="networkidle",
-                )
-
-                page.emulate_media(media="print")
-
-                result = page.pdf(
-                    format="A4",
-                    landscape=True,
-                    print_background=True,
-                    prefer_css_page_size=True,
-                    margin={
-                        "top": "9mm",
-                        "right": "9mm",
-                        "bottom": "9mm",
-                        "left": "9mm",
-                    },
-                )
-
-            finally:
-                browser.close()
 
         filename = (
             f"Smart_Saving_Group_Report_{year}_{month:02d}.pdf"
         )
-
         response = HttpResponse(
-            result,
-            content_type="application/pdf",
+            content_type="application/pdf"
         )
-
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
         )
+
+        pdf_status = pisa.CreatePDF(
+            src=html,
+            dest=response,
+            link_callback=link_callback,
+            encoding="UTF-8",
+        )
+
+        if pdf_status.err:
+            return HttpResponse(
+                "PDF generation failed. Please check the server error log.",
+                status=500,
+                content_type="text/plain",
+            )
 
         return response
 
@@ -1065,6 +1033,8 @@ def monthly_report(request):
 
 
 def link_callback(uri, rel):
+    uri = unquote(uri)
+
     if uri.startswith(settings.STATIC_URL):
         relative_path = uri.replace(
             settings.STATIC_URL, "", 1

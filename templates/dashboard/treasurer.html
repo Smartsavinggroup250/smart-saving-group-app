@@ -6,14 +6,12 @@ Treasurer Dashboard - Smart Saving Group
 
 {% block content %}
 
-<div class="ssg-page-title">
-    Treasurer Dashboard
+<div class="ssg-page-title", style="font-family: Cambria, serif;">
+    <i class="fas fa-handshake mr-2"></i> <h4 style="display: inline;">Hello, <strong>{{ request.user.first_name|default:request.user.username }}</strong> and welcome!
 </div>
-
-<p class="text-white mb-4">
-    Financial management and approvals
+<p style="font-family: Cambria, serif; color: #198754;">
+   Your financial activities, savings, and loans are all in one place. Let's make every contribution count.
 </p>
-
 
 <div class="ssg-stat-grid">
 

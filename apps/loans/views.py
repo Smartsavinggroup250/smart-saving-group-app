@@ -1,3 +1,4 @@
+from apps.accounts.views import get_management_dashboard_data
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -102,10 +103,27 @@ def loan_apply(request):
         )
 
         if form.is_valid():
+            loan = form.save(commit=False)
 
-            loan = form.save(
-                commit=False
-            )
+            # Use the existing Group Balance without changing its formula
+            dashboard_data = get_management_dashboard_data()
+            group_balance = dashboard_data["group_balance"]
+
+            if loan.requested_amount > group_balance:
+                messages.error(
+                    request,
+                    (
+                        f"Insufficient group balance. The available "
+                        f"Group Balance is {group_balance:,.2f} RWF. "
+                        f"Please request an amount within the available "
+                        f"balance or wait until the group has more funds."
+                    ),
+                )
+                return render(
+                    request,
+                    "loans/loan_form.html",
+                    {"form": form},
+                )
 
             # Assign member
             loan.member = member
