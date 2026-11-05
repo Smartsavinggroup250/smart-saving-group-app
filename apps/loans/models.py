@@ -332,3 +332,35 @@ class Loan(models.Model):
     @property
     def is_fully_paid(self):
         return self.remaining_balance <= Decimal("0.00")        
+    
+    @property
+    def loan_number(self):
+        return f"LN-{self.id:05d}"
+
+
+    @property
+    def expected_end_date(self):
+        """
+        Calculate expected loan completion date
+        based on disbursement date and duration.
+        """
+        if not self.disbursed_at:
+            return None
+
+        import calendar
+        from datetime import date
+
+        start = self.disbursed_at.date()
+
+        total_months = start.year * 12 + (start.month - 1)
+        total_months += self.duration_months
+
+        year, month_index = divmod(total_months, 12)
+        month = month_index + 1
+
+        day = min(
+            start.day,
+            calendar.monthrange(year, month)[1]
+        )
+
+        return date(year, month, day)

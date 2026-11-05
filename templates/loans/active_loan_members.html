@@ -2,37 +2,171 @@
 {% load humanize %}
 {% block content %}
 
+<style>
+    .loans-table-card {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .loans-table-header {
+        padding: 20px 24px;
+        background: #ffffff;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .loans-table-header h3 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 700;
+        color: #243247;
+    }
+
+    .loans-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .loans-table {
+        width: 100%;
+        min-width: 1500px;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .loans-table thead th {
+        background: #f4f6f9;
+        color: #49566a;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        padding: 15px 12px;
+        white-space: nowrap;
+        border-bottom: 2px solid #e5e9ef;
+    }
+
+    .loans-table tbody td {
+        padding: 15px 12px;
+        font-size: 13px;
+        color: #465267;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf0f4;
+        white-space: nowrap;
+    }
+
+    .loans-table tbody tr:hover {
+        background: #f8faff;
+    }
+
+    .loan-number {
+        font-weight: 700;
+        color: #2563eb;
+    }
+
+    .member-name {
+        font-weight: 600;
+        color: #263449;
+    }
+
+    .money {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .remaining-balance {
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .status-disbursed {
+        background: #d1f7e3;
+        color: #137547;
+    }
+
+    .status-approved {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .status-other {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .btn-disburse {
+        background: #198754;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn-disburse:hover {
+        background: #146c43;
+        color: white;
+    }
+
+    .pagination .page-link {
+        color: #2563eb;
+        border-radius: 5px;
+        margin: 0 3px;
+    }
+
+    .pagination .active .page-link {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: white;
+    }
+</style>
+
 <div class="ssg-page-title">
     Active Loans
 </div>
 
 <p class="text-white mb-4">
-    List of members with active loans.
+    Manage and monitor all members with active loans.
 </p>
 
-<div class="ssg-card">
+<div class="loans-table-card">
 
-    <div class="ssg-card-header">
-        <h3>Active Loans</h3>
+    <div class="loans-table-header">
+        <h3>
+            <i class="fas fa-hand-holding-usd mr-2"></i>
+            Active Loans
+        </h3>
     </div>
 
-    <div class="ssg-card-body">
+    <div class="p-3">
 
         {% if loans %}
 
-        <div class="table-responsive">
+        <div class="loans-table-wrapper">
 
-            <table class="table table-dark table-hover align-middle">
+            <table class="loans-table">
 
                 <thead>
                     <tr>
+                        <th>Loan ID</th>
                         <th>Member</th>
-                        <th>Member Number</th>
+                        <th>Loan taken on</th>
+                        <th>period</th>
                         <th>Loan Amount</th>
                         <th>Interest</th>
                         <th>Total Payable</th>
                         <th>Amount Repaid</th>
                         <th>Remaining Balance</th>
+                        <th>Ending Period</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -45,50 +179,70 @@
                     <tr>
 
                         <td>
-                            {{ loan.member.user.get_full_name }}
+                            <span class="loan-number">
+                                {{ loan.loan_number|default:loan.id }}
+                            </span>
                         </td>
 
                         <td>
-                            {{ loan.member.member_number }}
+                            <span class="member-name">
+                                {{ loan.member.user.get_full_name }}
+                            </span>
+                            <br>
+                            <small class="text-muted">
+                                {{ loan.member.member_number }}
+                            </small>
                         </td>
 
                         <td>
-                            {{ loan.principal_amount|floatformat:2|intcomma }} RWF
+                            {% if loan.disbursed_at %}{{ loan.disbursed_at|date:"d M Y" }}{% else %}-{% endif %}
                         </td>
 
                         <td>
-                            {{ loan.total_interest|floatformat:2|intcomma }} RWF
+                            {{ loan.duration_months|default:"-" }} Month(s)
+                        </td>
+
+                        <td class="money">
+                            {{ loan.principal_amount|floatformat:0|intcomma }} RWF
+                        </td>
+
+                        <td class="money">
+                            {{ loan.total_interest|floatformat:0|intcomma }} RWF
+                        </td>
+
+                        <td class="money">
+                            {{ loan.total_payable|floatformat:0|intcomma }} RWF
+                        </td>
+
+                        <td class="money">
+                            {{ loan.total_repaid|floatformat:0|intcomma }} RWF
+                        </td>
+
+                        <td class="remaining-balance">
+                            {{ loan.remaining_balance|floatformat:0|intcomma }} RWF
                         </td>
 
                         <td>
-                            {{ loan.total_payable|floatformat:2|intcomma }} RWF
-                        </td>
-
-                        <td>
-                            {{ loan.total_repaid|floatformat:2|intcomma }} RWF
-                        </td>
-
-                        <td>
-                            {{ loan.remaining_balance|floatformat:2|intcomma }} RWF
+                            {% if loan.expected_end_date %}{{ loan.expected_end_date|date:"d M Y" }}{% else %}-{% endif %}
                         </td>
 
                         <td>
 
                             {% if loan.status == "DISBURSED" %}
 
-                                <span class="badge bg-success">
+                                <span class="status-badge status-disbursed">
                                     Disbursed
                                 </span>
 
                             {% elif loan.status == "APPROVED" %}
 
-                                <span class="badge bg-primary">
+                                <span class="status-badge status-approved">
                                     Approved
                                 </span>
 
                             {% else %}
 
-                                <span class="badge bg-secondary">
+                                <span class="status-badge status-other">
                                     {{ loan.status }}
                                 </span>
 
@@ -97,22 +251,36 @@
                         </td>
 
                         <td>
+
                             {% if loan.status == "APPROVED" %}
+
                                 <form
                                     method="post"
                                     action="{% url 'loan_disburse' loan.id %}"
                                     onsubmit="return confirm('Are you sure you want to disburse this loan?');"
                                 >
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-success btn-sm">
+
+                                    <button type="submit" class="btn btn-disburse">
+                                        <i class="fas fa-money-bill-wave mr-1"></i>
                                         Disburse
                                     </button>
+
                                 </form>
+
                             {% elif loan.status == "DISBURSED" %}
-                                <span class="text-success">Already disbursed</span>
+
+                                <span class="text-success small font-weight-bold">
+                                    <i class="fas fa-check-circle"></i>
+                                    Disbursed
+                                </span>
+
                             {% else %}
+
                                 -
+
                             {% endif %}
+
                         </td>
 
                     </tr>
@@ -125,7 +293,6 @@
 
         </div>
 
-
         <!-- Pagination -->
 
         {% if page_obj.paginator.num_pages > 1 %}
@@ -134,89 +301,56 @@
 
             <ul class="pagination justify-content-center mt-4">
 
-                <!-- Previous -->
-
                 {% if page_obj.has_previous %}
 
                 <li class="page-item">
-
-                    <a
-                        class="page-link"
-                        href="?page={{ page_obj.previous_page_number }}"
-                    >
+                    <a class="page-link"
+                       href="?page={{ page_obj.previous_page_number }}">
                         Previous
                     </a>
-
                 </li>
 
                 {% else %}
 
                 <li class="page-item disabled">
-
-                    <span class="page-link">
-                        Previous
-                    </span>
-
+                    <span class="page-link">Previous</span>
                 </li>
 
                 {% endif %}
-
-
-                <!-- Page Numbers -->
 
                 {% for num in page_obj.paginator.page_range %}
 
                     {% if page_obj.number == num %}
 
                     <li class="page-item active">
-
-                        <span class="page-link">
-                            {{ num }}
-                        </span>
-
+                        <span class="page-link">{{ num }}</span>
                     </li>
 
                     {% else %}
 
                     <li class="page-item">
-
-                        <a
-                            class="page-link"
-                            href="?page={{ num }}"
-                        >
+                        <a class="page-link" href="?page={{ num }}">
                             {{ num }}
                         </a>
-
                     </li>
 
                     {% endif %}
 
                 {% endfor %}
 
-
-                <!-- Next -->
-
                 {% if page_obj.has_next %}
 
                 <li class="page-item">
-
-                    <a
-                        class="page-link"
-                        href="?page={{ page_obj.next_page_number }}"
-                    >
+                    <a class="page-link"
+                       href="?page={{ page_obj.next_page_number }}">
                         Next
                     </a>
-
                 </li>
 
                 {% else %}
 
                 <li class="page-item disabled">
-
-                    <span class="page-link">
-                        Next
-                    </span>
-
+                    <span class="page-link">Next</span>
                 </li>
 
                 {% endif %}
@@ -227,13 +361,18 @@
 
         {% endif %}
 
-
         {% else %}
 
-        <div class="text-center py-4">
+        <div class="text-center py-5">
 
-            <p class="mb-0">
-                No active loans found.
+            <i class="fas fa-hand-holding-usd fa-3x text-muted mb-3"></i>
+
+            <h5 class="text-muted">
+                No Active Loans Found
+            </h5>
+
+            <p class="text-muted mb-0">
+                There are currently no active loans to display.
             </p>
 
         </div>
