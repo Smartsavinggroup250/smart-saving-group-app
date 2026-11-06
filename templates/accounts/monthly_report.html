@@ -467,7 +467,7 @@
                     <thead><tr><th>Item</th><th>Amount (Frw)</th></tr></thead>
                     <tbody>
                         <tr><td>Closing cash and bank balance</td><td>{{ closing_balance|floatformat:0|intcomma }}</td></tr>
-                        <tr><td> Current outstanding loans</td><td>{{ outstanding_loans|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td> Current outstanding loans (+ Interests)</td><td>{{ outstanding_loans|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr><td> Current outstanding Contributions</td><td>{{ outstanding_contributions|floatformat:0|intcomma }}</td></tr>
                         <tr><td>Outstanding penalties</td><td>{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
                         <tr class="total"><td>NET FINANCIAL POSITION</td><td>{{ net_financial_position|floatformat:0|intcomma }}</td></tr>

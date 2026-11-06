@@ -17,7 +17,9 @@ from apps.notifications.services import (
     notify_admins_and_treasurers,
     notify_member,
 )
-
+from apps.penalties.services import (
+    generate_penalty_for_late_approval,
+)
 
 
 def is_admin_or_treasurer(user):
@@ -322,6 +324,11 @@ def contribution_approve(request, pk):
             "updated_at",
         ]
     )
+    
+    # Automatically issue a penalty if the contribution
+    # was approved after the monthly deadline.
+    generate_penalty_for_late_approval(contribution)
+    
     notify_member(
         contribution.member,
         title="Contribution Approved",

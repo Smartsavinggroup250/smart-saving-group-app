@@ -1,4 +1,4 @@
-from calendar import monthrange
+
 from datetime import date
 from decimal import Decimal
 
@@ -6,152 +6,183 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.members.models import Member
-from apps.penalties.models import Penalty
 from apps.savings.models import MonthlyContribution
+from apps.notifications.services import (
+    notify_member,
+    notify_admins_and_treasurers,
+)
+
+from .models import Penalty, PENALTY_PER_SHARE
 
 
-SHARE_VALUE = Decimal("10000.00")
-PENALTY_PER_SHARE = Decimal("2000.00")
-DEADLINE_DAY = 5
+def get_contribution_deadline(month):
+    """Return the 5th day of the month following the contribution month."""
+    if month.month == 12:
+        return date(month.year + 1, 1, 5)
+
+    return date(month.year, month.month + 1, 5)
 
 
-def get_previous_month(year, month):
-    """
-    Return the previous month and its year.
-    """
+def create_penalty_for_member(member, month, contribution=None):
+    """Create one penalty per active member per contribution month."""
 
-    if month == 1:
-        return year - 1, 12
+    month = month.replace(day=1)
 
-    return year, month - 1
+    if member.status != "ACTIVE" or member.shares <= 0:
+        return None, False
 
+    shares = member.shares
+    amount = Decimal(shares) * PENALTY_PER_SHARE
 
-def assess_monthly_penalties(year=None, month=None):
-    """
-    Automatically assess penalties for members who have
-    not paid their monthly contribution by the 5th of
-    the following month.
-
-    Example:
-        September contribution
-        -> deadline is October 5
-        -> penalty is assessed after October 5.
-    """
-
-    today = timezone.localdate()
-
-    # By default, assess the previous month's contribution.
-    if year is None or month is None:
-        assessment_year, assessment_month = get_previous_month(
-            today.year,
-            today.month,
+    with transaction.atomic():
+        penalty, created = Penalty.objects.get_or_create(
+            member=member,
+            contribution_month=month,
+            defaults={
+                "contribution": contribution,
+                "number_of_shares": shares,
+                "amount": amount,
+                "reason": (
+                    f"Late monthly contribution for {month:%B %Y}"
+                ),
+                "status": "PENDING",
+            },
         )
-    else:
-        assessment_year = year
-        assessment_month = month
 
-    # Deadline is the 5th day of the following month.
-    if assessment_month == 12:
-        deadline_year = assessment_year + 1
-        deadline_month = 1
-    else:
-        deadline_year = assessment_year
-        deadline_month = assessment_month + 1
+        if (
+            not created
+            and contribution is not None
+            and penalty.contribution_id is None
+        ):
+            penalty.contribution = contribution
+            penalty.save(update_fields=["contribution"])
 
-    deadline_date = date(
-        deadline_year,
-        deadline_month,
-        DEADLINE_DAY,
-    )
-
-    # Do not assess penalties until the deadline has passed.
-    if today <= deadline_date:
-        return {
-            "success": False,
-            "message": (
-                f"Penalty assessment for "
-                f"{date(assessment_year, assessment_month, 1):%B %Y} "
-                f"starts after {deadline_date:%d %B %Y}."
+    if created:
+        notify_member(
+            member,
+            title="Late Contribution Penalty Issued",
+            message=(
+                f"A penalty of {amount:,.2f} RWF has been issued "
+                f"for your {month:%B %Y} contribution. "
+                f"The payment deadline was "
+                f"{get_contribution_deadline(month):%d %B %Y}. "
+                f"Penalty rate: 2,000 RWF per share."
             ),
+            notification_type="PENALTY",
+        )
+
+        notify_admins_and_treasurers(
+            title="Automatic Penalty Generated",
+            message=(
+                f"A penalty of {amount:,.2f} RWF has been generated "
+                f"for member {member.member_number} for "
+                f"{month:%B %Y}. Shares: {shares}."
+            ),
+            notification_type="PENALTY",
+        )
+
+    return penalty, created
+
+
+def generate_monthly_penalties(month, today=None):
+    """
+    Assess active members whose contributions were not approved
+    by the 5th day of the following month.
+    """
+
+    month = month.replace(day=1)
+
+    if today is None:
+        today = timezone.localdate()
+
+    deadline = get_contribution_deadline(month)
+
+    if today <= deadline:
+        return {
             "created": 0,
+            "skipped": True,
+            "message": (
+                f"The deadline is {deadline}. "
+                "Penalties cannot be generated yet."
+            ),
         }
 
-    created_count = 0
-
-    active_members = Member.objects.filter(
+    members = Member.objects.filter(
         status="ACTIVE"
     ).select_related("user")
 
-    for member in active_members:
+    created_count = 0
 
-        expected_amount = (
-            Decimal(member.shares) * SHARE_VALUE
+    for member in members:
+
+        # Get approved contributions with approval dates.
+        approved_contributions = list(
+            MonthlyContribution.objects.filter(
+                member=member,
+                month=month,
+                status="APPROVED",
+                approved_at__isnull=False,
+            ).order_by("approved_at")
         )
 
-        # Find the member's contribution for the month being assessed.
-        contribution = MonthlyContribution.objects.filter(
-            member=member,
-            month__year=assessment_year,
-            month__month=assessment_month,
-        ).first()
-
-        # If an approved contribution exists,
-        # the member paid on time.
-        if contribution and contribution.status == "APPROVED":
-            continue
-
-        # If no contribution exists, create a pending
-        # contribution representing the amount due.
-        if contribution is None:
-            contribution = MonthlyContribution.objects.create(
-                member=member,
-                month=date(
-                    assessment_year,
-                    assessment_month,
-                    1,
-                ),
-                amount=expected_amount,
-                payment_method="CASH",
-                reference=(
-                    f"DUE-{member.id}-"
-                    f"{assessment_year}-{assessment_month}"
-                ),
-                status="PENDING",
-                requested_by=member.user,
-            )
-
-        # Prevent duplicate penalties for the same contribution.
-        existing_penalty = Penalty.objects.filter(
-            member=member,
-            contribution=contribution,
-        ).exists()
-
-        if existing_penalty:
-            continue
-
-        penalty_amount = (
-            Decimal(member.shares) * PENALTY_PER_SHARE
+        # Check approval dates using Python and Kigali timezone.
+        paid_on_time = any(
+            timezone.localtime(c.approved_at).date() <= deadline
+            for c in approved_contributions
         )
 
-        with transaction.atomic():
+        if paid_on_time:
+            continue
 
-            Penalty.objects.create(
-                member=member,
-                contribution=contribution,
-                number_of_shares=member.shares,
-                amount=penalty_amount,
-                reason="Late monthly contribution",
-                status="PENDING",
-                issued_by=member.user,
-            )
+        # Find a contribution approved after the deadline, if any.
+        late_contribution = next(
+            (
+                c for c in approved_contributions
+                if timezone.localtime(c.approved_at).date() > deadline
+            ),
+            None,
+        )
 
+        penalty, created = create_penalty_for_member(
+            member=member,
+            month=month,
+            contribution=late_contribution,
+        )
+
+        if created:
             created_count += 1
 
     return {
-        "success": True,
-        "message": (
-            f"Monthly penalties assessed for "
-            f"{date(assessment_year, assessment_month, 1):%B %Y}."
-        ),
         "created": created_count,
+        "skipped": False,
+        "month": month,
+        "deadline": deadline,
     }
+
+def generate_penalty_for_late_approval(contribution):
+    """
+    Called after Treasurer/Admin approves a contribution.
+    Generate a penalty if approval happened after the deadline.
+    """
+
+    if contribution.status != "APPROVED":
+        return None
+
+    if not contribution.approved_at:
+        return None
+
+    month = contribution.month.replace(day=1)
+    deadline = get_contribution_deadline(month)
+
+    approval_date = timezone.localtime(
+        contribution.approved_at
+    ).date()
+
+    if approval_date <= deadline:
+        return None
+
+    return create_penalty_for_member(
+        member=contribution.member,
+        month=month,
+        contribution=contribution,
+    )

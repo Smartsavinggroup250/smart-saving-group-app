@@ -29,6 +29,12 @@ class Penalty(models.Model):
         "savings.MonthlyContribution",
         on_delete=models.PROTECT,
         related_name="penalties",
+        blank=True,
+        null=True,
+    )
+
+    contribution_month = models.DateField(
+        help_text="First day of the month for which the penalty was issued."
     )
 
     number_of_shares = models.PositiveIntegerField()
@@ -96,6 +102,13 @@ class Penalty(models.Model):
 
     class Meta:
         ordering = ["-issued_at"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member", "contribution_month"],
+                name="unique_member_penalty_per_month",
+            ),
+        ]
 
     def __str__(self):
         return (
