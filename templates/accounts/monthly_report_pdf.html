@@ -2,6 +2,7 @@
 {% load static humanize %}
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Smart Saving Group Monthly Financial Report</title>
@@ -72,6 +73,7 @@
             border: 1px solid #8bcfe9;
             background-color: #eef8ff;
             padding: 8px;
+            border-radius: 6px;
             margin-bottom: 10px;
             line-height: 1.4;
         }
@@ -81,13 +83,13 @@
             background-color: #0878ca;
             color: #ffffff;
             padding: 6px;
+            border-radius: 4px;
             font-size: 9.5pt;
             font-weight: bold;
             margin: 0 0 5px 0;
         }
 
-        /* TWO-COLUMN LAYOUT
-           The spacer column creates visible space between tables. */
+        /* TWO-COLUMN LAYOUT */
         .layout-table {
             width: 100%;
             border-collapse: collapse;
@@ -113,19 +115,46 @@
             border: none;
         }
 
+        /* ROUNDED TABLE CONTAINER */
+        .table-wrapper {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #c5d9e8;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 0 5px 0;
+            background-color: #ffffff;
+        }
+
         /* INNER DATA TABLES */
         .data-table {
             width: 100%;
-            border-collapse: collapse;
-            margin: 0 0 5px 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: none;
+            margin: 0;
         }
 
         .data-table th,
         .data-table td {
-            border: 1px solid #c5d9e8;
+            border: none;
+            border-right: 1px solid #c5d9e8;
+            border-bottom: 1px solid #c5d9e8;
             padding: 5px;
             text-align: left;
             vertical-align: middle;
+        }
+
+        /* Remove duplicate right borders */
+        .data-table th:last-child,
+        .data-table td:last-child {
+            border-right: none;
+        }
+
+        /* Remove duplicate bottom borders */
+        .data-table tr:last-child th,
+        .data-table tr:last-child td {
+            border-bottom: none;
         }
 
         .data-table th {
@@ -143,17 +172,39 @@
             font-weight: bold;
         }
 
+        
         /* FINANCIAL SUMMARY TABLES */
+        .summary-table-wrapper {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #c5d9e8;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
         .summary-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin: 0;
+            border: none;
         }
 
         .summary-table td {
-            border: 1px solid #c5d9e8;
+            border: none;
+            border-right: 1px solid #c5d9e8;
+            border-bottom: 1px solid #c5d9e8;
             padding: 7px 5px;
             vertical-align: middle;
+        }
+
+        .summary-table td:last-child {
+            border-right: none;
+        }
+
+        .summary-table tr:last-child td {
+            border-bottom: none;
         }
 
         .summary-table td:first-child {
@@ -167,23 +218,63 @@
             white-space: nowrap;
         }
 
-        /* RECOMMENDATIONS */
+
+        
+       /* RECOMMENDATIONS */
         .recommendations {
             border: 1px solid #8bcfe9;
-            padding: 8px;
-            line-height: 1.5;
+            border-radius: 12px;
+            background-color: #ffffff;
+            padding: 10px;
+            line-height: 1.3;
+            overflow: hidden;
         }
 
-        .recommendations p {
-            margin: 0 0 7px 0;
+        .recommendation {
+            padding: 3px 3px;
+            border-bottom: 1px solid #e2edf5;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .recommendations p:last-child {
-            margin-bottom: 0;
+        .recommendation:last-child {
+            border-bottom: none;
         }
 
+        .recommendation .check {
+            color: #087a3d;
+            font-weight: bold;
+            margin-right: 0;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        
+        /* ROUND TOP CORNERS OF TABLE HEADER */
+        .data-table tr:first-child th:first-child {
+            border-top-left-radius: 11px;
+        }
 
-         /* APPROVAL SIGNATURES */
+        .data-table tr:first-child th:last-child {
+            border-top-right-radius: 11px;
+        }
+
+        /* ROUND BOTTOM CORNERS OF LAST ROW */
+        .data-table tr:last-child td:first-child {
+            border-bottom-left-radius: 11px;
+        }
+
+        .data-table tr:last-child td:last-child {
+            border-bottom-right-radius: 11px;
+        }
+
+        /* Ensure backgrounds follow rounded corners */
+        .data-table th,
+        .data-table td {
+            background-clip: padding-box;
+        }
+
+        /* APPROVAL SIGNATURES */
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
@@ -192,6 +283,7 @@
             margin-bottom: 4px;
             page-break-inside: avoid;
         }
+
         .signatures-table td {
             width: 33.333%;
             border: none;
@@ -212,7 +304,6 @@
             margin-bottom: 2px;
         }
 
-        
         .signature-name {
             font-weight: bold;
         }
@@ -233,6 +324,7 @@
         .note {
             border-left: 3px solid #0878ca;
             background-color: #eef8ff;
+            border-radius: 12px;
             padding: 8px;
             margin-top: 8px;
             line-height: 1.4;
@@ -293,68 +385,73 @@
     <div class="section-title">1. Financial Summary</div>
 
     <table class="layout-table">
-        <tr>
-            <td class="layout-cell">
-                <table class="summary-table">
-                    <tr>
-                        <td>Initial Balance</td>
-                        <td class="amount">
-                            {{ initial_balance|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Penalties Incurred This Month</td>
-                        <td class="amount">
-                            {{ total_penalties_incurred|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Loans Disbursed</td>
-                        <td class="amount">
-                            {{ total_loans_disbursed|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Unpaid Penalties</td>
-                        <td class="amount">
-                            {{ unpaid_penalties|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                </table>
-            </td>
+            <tr>
+                <td class="layout-cell">
+                    <div class="summary-table-wrapper">
+                        <table class="summary-table">
+                            <tr>
+                                <td>Initial Balance</td>
+                                <td class="amount">
+                                    {{ initial_balance|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Penalties Incurred This Month</td>
+                                <td class="amount">
+                                    {{ total_penalties_incurred|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Loans Disbursed</td>
+                                <td class="amount">
+                                    {{ total_loans_disbursed|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Unpaid Penalties</td>
+                                <td class="amount">
+                                    {{ unpaid_penalties|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
 
-            <td class="layout-spacer"></td>
+                <td class="layout-spacer"></td>
 
-            <td class="layout-cell">
-                <table class="summary-table">
-                    <tr>
-                        <td>Total Contributions</td>
-                        <td class="amount">
-                            {{ total_contributions|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Loan Repayments</td>
-                        <td class="amount">
-                            {{ total_repayments|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Old Penalties Collected</td>
-                        <td class="amount">
-                            {{ old_penalties_collected|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Closing Cash / Bank Balance</td>
-                        <td class="amount">
-                            {{ closing_balance|floatformat:0|intcomma }} Frw
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+                <td class="layout-cell">
+                    <div class="summary-table-wrapper">
+                        <table class="summary-table">
+                            <tr>
+                                <td>Total Contributions</td>
+                                <td class="amount">
+                                    {{ total_contributions|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Loan Repayments</td>
+                                <td class="amount">
+                                    {{ total_repayments|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Old Penalties Collected</td>
+                                <td class="amount">
+                                    {{ old_penalties_collected|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Closing Cash / Bank Balance</td>
+                                <td class="amount">
+                                    {{ closing_balance|floatformat:0|intcomma }} Frw
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>    
 
     <!-- 2 AND 3: INCOME/EXPENSES AND CONTRIBUTIONS -->
     <table class="layout-table">
@@ -364,6 +461,7 @@
                     2. Monthly Income and Expenses
                 </div>
 
+                <div class="table-wrapper">
                 <table class="data-table">
                     <tr>
                         <th>Description</th>
@@ -402,6 +500,7 @@
                         <td class="amount">{{ monthly_net_cash_flow|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
+                </div>
             </td>
 
             <td class="layout-spacer"></td>
@@ -411,6 +510,7 @@
                     3. Monthly Contributions Report
                 </div>
 
+                <div class="table-wrapper">
                 <table class="data-table">
                     <tr>
                         <th>Indicator</th>
@@ -449,6 +549,7 @@
                         <td class="amount">{{ outstanding_contributions|floatformat:0|intcomma }} Frw</td>
                     </tr>
                 </table>
+                </div>
             </td>
         </tr>
     </table>
@@ -461,6 +562,7 @@
                     4. Loan Portfolio Report
                 </div>
 
+                <div class="table-wrapper">
                 <table class="data-table">
                     <tr>
                         <th>Description</th>
@@ -483,6 +585,7 @@
                         <td class="amount">{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
+                </div>
             </td>
 
             <td class="layout-spacer"></td>
@@ -492,6 +595,7 @@
                     5. Penalties Report
                 </div>
 
+                <div class="table-wrapper">
                 <table class="data-table">
                     <tr>
                         <th>Description</th>
@@ -518,6 +622,7 @@
                         <td class="amount">{{ outstanding_penalties|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
+                </div>
             </td>
         </tr>
     </table>
@@ -530,6 +635,7 @@
                     6. Financial Position at Month-End
                 </div>
 
+                <div class="table-wrapper">
                 <table class="data-table">
                     <tr>
                         <th>Item</th>
@@ -556,6 +662,7 @@
                         <td class="amount">{{ net_financial_position|floatformat:0|intcomma }}</td>
                     </tr>
                 </table>
+                </div>
             </td>
 
             <td class="layout-spacer"></td>
@@ -565,6 +672,7 @@
                     7. Observations &amp; Recommendations
                 </div>
 
+                
                 <div class="recommendations">
                     <div class="recommendation"><span class="check">✓</span><span><strong>Save Consistently</strong>: Pay monthly shares on time.</span></div>
                     <div class="recommendation"><span class="check">✓</span><span><strong>Repay Loans on Time</strong>: Honor all loan agreements.</span></div>
@@ -581,11 +689,11 @@
 
     <!-- REPORT NOTE -->
     <div class="note">
-        <strong>*Note:</strong> This report reflects the financial records
-        available and verified as of the reporting date. The complete monthly
-        report is available from the 6th day of the following month to allow
-        time for verification and reconciliation. Any discrepancies should
-        be reported to the responsible committee for review and correction.
+        <strong>*Note:</strong> This report provides an overview of the financial position and activities of Smart Saving Group for 
+        the reporting month indicated above. The complete monthly report becomes available on the 6th day of each month (for example, 
+        the complete report for October becomes available on 6th November). Since this report is system-generated, you are encouraged 
+        to carefully review and verify the information presented. If any errors, discrepancies, or inaccuracies are identified, you 
+        should be promptly reported to the management committee for review, necessary action, and correction.
     </div>
 
     <!-- APPROVAL SIGNATURES: sign above each name -->
@@ -594,7 +702,7 @@
             <td>
                 <div class="signature-heading">Prepared by:</div>
                 <div class="signature-role">Head of Finance</div>
-                <div class="signature-name">Mukeshimana Clementine</div>
+                <div class="signature-name">MUKESHIMANA Clementine</div>
                 <div class="signature-space"></div>
             </td>
             <td>
