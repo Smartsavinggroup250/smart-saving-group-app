@@ -580,6 +580,10 @@
                         <td>Loan principal repaid</td>
                         <td class="amount">{{ loan_principal_repaid|floatformat:0|intcomma }}</td>
                     </tr>
+                    <tr>
+                        <td>Number of active loans</td>
+                        <td>{{ active_loan_count|default:0 }}</td>
+                    </tr>
                     <tr class="total">
                         <td>Current outstanding loan balance</td>
                         <td class="amount">{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td>
