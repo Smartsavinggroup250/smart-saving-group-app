@@ -390,27 +390,27 @@
                     <div class="summary-table-wrapper">
                         <table class="summary-table">
                             <tr>
-                                <td>Initial Balance</td>
+                                <td>INITIAL / OPENING BALANCE:</td>
                                 <td class="amount">
                                     {{ initial_balance|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Penalties Incurred This Month</td>
+                                <td>CONTRIBUTIONS RECEIVED:</td>
                                 <td class="amount">
-                                    {{ total_penalties_incurred|floatformat:0|intcomma }} Frw
+                                    {{ contributions_received|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Loans Disbursed</td>
+                                <td>OTAL ACCUMULATED CONTRIBUTIONS:</td>
                                 <td class="amount">
-                                    {{ total_loans_disbursed|floatformat:0|intcomma }} Frw
+                                    {{ total_accumulated_contributions|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Unpaid Penalties</td>
+                                <td>LOAN REPAYMENTS:</td>
                                 <td class="amount">
-                                    {{ unpaid_penalties|floatformat:0|intcomma }} Frw
+                                    {{ total_repayments|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                         </table>
@@ -423,25 +423,25 @@
                     <div class="summary-table-wrapper">
                         <table class="summary-table">
                             <tr>
-                                <td>Total Contributions</td>
+                                <td>LOANS DISBURSED:</td>
                                 <td class="amount">
-                                    {{ total_contributions|floatformat:0|intcomma }} Frw
+                                    {{ total_loans_disbursed|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Loan Repayments</td>
+                                <td>INTEREST INCOME:</td>
                                 <td class="amount">
-                                    {{ total_repayments|floatformat:0|intcomma }} Frw
+                                    {{ interest_income|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Old Penalties Collected</td>
+                                <td>TOTAL ACCUMULATED INTERESTS:</td>
                                 <td class="amount">
-                                    {{ old_penalties_collected|floatformat:0|intcomma }} Frw
+                                    {{ total_accumulated_interests|default:0|floatformat:0|intcomma }} Frw
                                 </td>
                             </tr>
                             <tr>
-                                <td>Closing Cash / Bank Balance</td>
+                                <td>CLOSING / ENDING BALANCE:</td>
                                 <td class="amount">
                                     {{ closing_balance|floatformat:0|intcomma }} Frw
                                 </td>

@@ -5,7 +5,7 @@ from datetime import date, datetime, time
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -502,6 +502,42 @@ def monthly_report(request):
         datetime.combine(end_date_exclusive, time.min)
     )
 
+    
+    # ==========================================
+    # CONTRIBUTIONS SUMMARY
+    # ==========================================
+
+    # All approved contributions received during this
+    # accounting period (6th to 5th).
+    period_approved_contributions = MonthlyContribution.objects.filter(
+        status="APPROVED",
+        approved_at__gte=start_datetime,
+        approved_at__lt=end_datetime,
+    )
+
+    # Total cash contributions received during this period.
+    # Includes current-month contributions and old arrears collected.
+    contributions_received = (
+        period_approved_contributions.aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+    )
+
+    # Used by closing balance and monthly cash flow.
+    total_contributions = contributions_received
+
+    contribution_count = period_approved_contributions.count()
+
+    # Total accumulated contributions up to report end.
+    total_accumulated_contributions = (
+        MonthlyContribution.objects.filter(
+            status="APPROVED",
+            approved_at__lt=end_datetime,
+        ).aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+    )
+
     # --------------------------------------------------
     # EXPECTED CONTRIBUTIONS
     # One share = Frw 10,000
@@ -518,24 +554,135 @@ def monthly_report(request):
         Decimal(total_active_shares) * Decimal("10000")
     )
 
+    selected_month_start = date(year, month, 1)
+
     # --------------------------------------------------
-    # APPROVED CONTRIBUTIONS FOR SELECTED MONTH
+    # OUTSTANDING OLD CONTRIBUTIONS
+    # Arrears existing at the beginning of this period.
+    # Payments made during this period must NOT reduce
+    # the opening arrears.
     # --------------------------------------------------
 
-    approved_contributions = MonthlyContribution.objects.filter(
-        status="APPROVED",
-        month__year=year,
-        month__month=month,
+    outstanding_old_contributions = Decimal("0.00")
+
+    first_contribution_month = (
+        MonthlyContribution.objects
+        .order_by("month")
+        .values_list("month", flat=True)
+        .first()
     )
 
-    total_contributions = (
-        approved_contributions.aggregate(
+    if first_contribution_month:
+
+        current_contribution_month = (
+            first_contribution_month.replace(day=1)
+        )
+
+        while current_contribution_month < selected_month_start:
+
+            expected_previous_month = expected_contributions
+
+            paid_before_period = (
+                MonthlyContribution.objects.filter(
+                    status="APPROVED",
+                    month__year=current_contribution_month.year,
+                    month__month=current_contribution_month.month,
+                    approved_at__lt=start_datetime,
+                ).aggregate(
+                    total=Sum("amount")
+                )["total"] or Decimal("0.00")
+            )
+
+            monthly_outstanding = max(
+                expected_previous_month - paid_before_period,
+                Decimal("0.00"),
+            )
+
+            outstanding_old_contributions += monthly_outstanding
+
+            # Move to the next contribution month.
+            if current_contribution_month.month == 12:
+                current_contribution_month = date(
+                    current_contribution_month.year + 1,
+                    1,
+                    1,
+                )
+            else:
+                current_contribution_month = date(
+                    current_contribution_month.year,
+                    current_contribution_month.month + 1,
+                    1,
+                )
+
+    # --------------------------------------------------
+    # OLD CONTRIBUTIONS COLLECTED DURING THIS PERIOD
+    # --------------------------------------------------
+
+    old_contributions_collected = (
+        period_approved_contributions.filter(
+            month__lt=selected_month_start,
+        ).aggregate(
             total=Sum("amount")
-        )["total"]
-        or Decimal("0.00")
+        )["total"] or Decimal("0.00")
     )
 
-    contribution_count = approved_contributions.count()
+    # --------------------------------------------------
+    # TOTAL CONTRIBUTIONS DUE
+    # --------------------------------------------------
+
+    total_contributions_due = (
+        outstanding_old_contributions
+        + expected_contributions
+    )
+
+    # --------------------------------------------------
+    # OUTSTANDING CONTRIBUTIONS AT PERIOD END
+    # --------------------------------------------------
+
+    outstanding_contributions = max(
+        total_contributions_due - contributions_received,
+        Decimal("0.00"),
+    )
+
+    # --------------------------------------------------
+    # MEMBERS
+    # --------------------------------------------------
+
+    total_members = Member.objects.count()
+
+    active_members_qs = Member.objects.filter(
+        status="ACTIVE"
+    )
+
+    active_members = active_members_qs.count()
+
+    # --------------------------------------------------
+    # MEMBERS WHO HAVE NOT FULLY PAID THIS MONTH
+    # --------------------------------------------------
+
+    members_who_have_not_paid = 0
+
+    for member in active_members_qs:
+
+        expected_amount = (
+            Decimal(member.shares) * Decimal("10000")
+        )
+
+        approved_amount = (
+            MonthlyContribution.objects.filter(
+                member=member,
+                month__year=year,
+                month__month=month,
+                status="APPROVED",
+                approved_at__lt=end_datetime,
+            ).aggregate(
+                total=Sum("amount")
+            )["total"] or Decimal("0.00")
+        )
+
+        if approved_amount < expected_amount:
+            members_who_have_not_paid += 1
+
 
     # --------------------------------------------------
     # LOAN PORTFOLIO
@@ -565,8 +712,8 @@ def monthly_report(request):
     # New loans disbursed during the selected calendar month.
     newly_disbursed_loans = Loan.objects.filter(
         status__in=["DISBURSED", "COMPLETED"],
-        disbursed_at__gte=start_of_month,
-        disbursed_at__lt=start_of_next_month,
+        disbursed_at__gte=start_datetime,
+        disbursed_at__lt=end_datetime,
     )
 
     # Includes principal plus the loan's calculated interest.
@@ -578,8 +725,8 @@ def monthly_report(request):
     # Approved repayments during the selected calendar month.
     loan_portfolio_repayments = LoanRepayment.objects.filter(
         status="APPROVED",
-        approved_at__gte=start_of_month,
-        approved_at__lt=start_of_next_month,
+        approved_at__gte=start_datetime,
+        approved_at__lt=end_datetime,
     )
 
     # TEMPORARY ESTIMATE:
@@ -605,8 +752,8 @@ def monthly_report(request):
 
     approved_repayments = LoanRepayment.objects.filter(
         status="APPROVED",
-        payment_date__gte=start_datetime,
-        payment_date__lt=end_datetime,
+        approved_at__gte=start_datetime,
+        approved_at__lt=end_datetime,
     )
 
     total_repayments = (
@@ -657,6 +804,37 @@ def monthly_report(request):
     )
 
     disbursed_loan_count = disbursed_loans.count()
+    
+    # --------------------------------------------------
+    # LOAN INTEREST SUMMARY
+    # --------------------------------------------------
+
+    # 1. Interest income from loans disbursed
+    # during the selected accounting period.
+
+    interest_income = sum(
+        (
+            loan.total_interest
+            for loan in disbursed_loans
+        ),
+        Decimal("0.00"),
+    )
+
+    # 2. Total accumulated interest from all loans
+    # disbursed from the beginning up to the report end date.
+
+    all_disbursed_loans = Loan.objects.filter(
+        status__in=["DISBURSED", "COMPLETED"],
+        disbursed_at__lt=end_datetime,
+    )
+
+    total_accumulated_interests = sum(
+        (
+            loan.total_interest
+            for loan in all_disbursed_loans
+        ),
+        Decimal("0.00"),
+    )
 
     # --------------------------------------------------
     # CURRENT OUTSTANDING LOANS
@@ -664,7 +842,7 @@ def monthly_report(request):
     # --------------------------------------------------
 
     active_loans = Loan.objects.filter(
-        status__in=["APPROVED", "DISBURSED"]
+        status="DISBURSED"
     )
 
     outstanding_loans = sum(
@@ -672,7 +850,19 @@ def monthly_report(request):
         Decimal("0.00"),
     )
 
-    active_loan_count = active_loans.count()
+    # --------------------------------------------------
+    # ACTIVE LOANS AT THE END OF THE REPORTING PERIOD
+    # --------------------------------------------------
+
+    historical_active_loans = Loan.objects.filter(
+        status__in=["DISBURSED", "COMPLETED"],
+        disbursed_at__lt=end_datetime,
+    ).filter(
+        Q(completed_at__isnull=True)
+        | Q(completed_at__gte=end_datetime)
+    )
+
+    active_loan_count = historical_active_loans.count()
 
     # --------------------------------------------------
     # CURRENT CUMULATIVE SAVINGS LEDGER
@@ -691,12 +881,50 @@ def monthly_report(request):
     # Accounting period: 6th to 5th of the next month
     # --------------------------------------------------
 
-    # 1. Penalties assessed during the selected period
+    # 1. Old penalties issued before this reporting period
+    old_penalties = Penalty.objects.filter(
+        issued_at__lt=start_datetime,
+    ).exclude(
+        status="REJECTED",
+    ).filter(
+        Q(waived_at__isnull=True)
+        | Q(waived_at__gte=start_datetime)
+    )
+
+    # 2. Calculate old unpaid penalties as at the
+    # beginning of this reporting period
+    old_unpaid_penalties = Decimal("0.00")
+
+    for penalty in old_penalties:
+
+        paid_before_period = (
+            PenaltyPayment.objects.filter(
+                penalty=penalty,
+                status="APPROVED",
+                approved_at__lt=start_datetime,
+            ).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+        remaining_penalty = max(
+            penalty.amount - paid_before_period,
+            Decimal("0.00"),
+        )
+
+        old_unpaid_penalties += remaining_penalty
+
+
+    # 3. Penalties assessed during the selected period
     penalties_assessed = Penalty.objects.filter(
         issued_at__gte=start_datetime,
         issued_at__lt=end_datetime,
     ).exclude(
-        status__in=["REJECTED", "WAIVED"]
+        status="REJECTED",
+    ).filter(
+        Q(waived_at__isnull=True)
+        | Q(waived_at__gte=end_datetime)
     )
 
     penalties_assessed_amount = (
@@ -706,28 +934,19 @@ def monthly_report(request):
         or Decimal("0.00")
     )
 
-    # 2. Old unpaid penalties assessed before this period
-    old_unpaid_penalties = (
-        Penalty.objects.filter(
-            issued_at__lt=start_datetime,
-            status__in=["PENDING", "APPROVED"],
-        ).aggregate(
-            total=Sum("amount")
-        )["total"]
-        or Decimal("0.00")
-    )
 
-    # 3. Total penalties due
+    # 4. Total penalties due
     total_penalties_due = (
         old_unpaid_penalties
         + penalties_assessed_amount
     )
 
-    # 4. Penalties collected during the selected period
+
+    # 5. Penalties collected during this reporting period
     penalty_payments_in_period = PenaltyPayment.objects.filter(
         status="APPROVED",
-        payment_date__gte=start_datetime,
-        payment_date__lt=end_datetime,
+        approved_at__gte=start_datetime,
+        approved_at__lt=end_datetime,
     )
 
     penalties_collected = (
@@ -737,12 +956,12 @@ def monthly_report(request):
         or Decimal("0.00")
     )
 
-    # 5. Outstanding penalties
+
+    # 6. Outstanding penalties at the end of this period
     outstanding_penalties = max(
         total_penalties_due - penalties_collected,
         Decimal("0.00"),
     )
-
 
     # --------------------------------------------------
     # MEMBERS
@@ -775,6 +994,7 @@ def monthly_report(request):
                 month__year=year,
                 month__month=month,
                 status="APPROVED",
+                approved_at__lt=end_datetime,
             ).aggregate(total=Sum("amount"))["total"]
             or Decimal("0.00")
         )
@@ -782,69 +1002,7 @@ def monthly_report(request):
         if approved_amount < expected_amount:
             members_who_have_not_paid += 1
 
-    # --------------------------------------------------
-    # OUTSTANDING CONTRIBUTIONS FROM OLDER MONTHS
-    # --------------------------------------------------
-
-    first_contribution_month = (
-        MonthlyContribution.objects
-        .order_by("month")
-        .values_list("month", flat=True)
-        .first()
-    )
-
-    outstanding_old_contributions = Decimal("0.00")
-
-    if first_contribution_month:
-        current_contribution_month = (
-            first_contribution_month.replace(day=1)
-        )
-
-        expected_monthly_contributions = (
-            Decimal(total_active_shares) * Decimal("10000")
-        )
-
-        while current_contribution_month < selected_month:
-
-            paid_amount = (
-                MonthlyContribution.objects.filter(
-                    status="APPROVED",
-                    month__year=current_contribution_month.year,
-                    month__month=current_contribution_month.month,
-                ).aggregate(total=Sum("amount"))["total"]
-                or Decimal("0.00")
-            )
-
-            monthly_outstanding = (
-                expected_monthly_contributions - paid_amount
-            )
-
-            if monthly_outstanding > 0:
-                outstanding_old_contributions += monthly_outstanding
-
-            if current_contribution_month.month == 12:
-                current_contribution_month = date(
-                    current_contribution_month.year + 1,
-                    1,
-                    1,
-                )
-            else:
-                current_contribution_month = date(
-                    current_contribution_month.year,
-                    current_contribution_month.month + 1,
-                    1,
-                )
-
-    total_contributions_due = (
-        outstanding_old_contributions
-        + expected_contributions
-    )
-
-    outstanding_contributions = max(
-        total_contributions_due - total_contributions,
-        Decimal("0.00"),
-    )
-
+    
     # --------------------------------------------------
     # INITIAL BALANCE
     # Carry forward the previous month's closing balance.
@@ -922,7 +1080,7 @@ def monthly_report(request):
 
     net_financial_position = (
         closing_balance
-        + outstanding_loans
+        + current_outstanding_loan_balance
         + outstanding_contributions
         + outstanding_penalties
     )
@@ -944,9 +1102,12 @@ def monthly_report(request):
         "outstanding_old_contributions": (
             outstanding_old_contributions
         ),
+        "contributions_received": contributions_received,
+        "total_accumulated_contributions": total_accumulated_contributions,
         "expected_contributions": expected_contributions,
         "total_contributions_due": total_contributions_due,
         "outstanding_contributions": outstanding_contributions,
+        "old_contributions_collected": old_contributions_collected,
 
         "total_repayments": total_repayments,
         "repayment_count": repayment_count,
@@ -957,6 +1118,9 @@ def monthly_report(request):
 
         "total_loans_disbursed": total_loans_disbursed,
         "disbursed_loan_count": disbursed_loan_count,
+        
+        "interest_income": interest_income,
+        "total_accumulated_interests": total_accumulated_interests,
 
         "outstanding_loans": outstanding_loans,
         "active_loan_count": active_loan_count,

@@ -219,6 +219,7 @@
     margin: 0 0 18px;
     font: 12px/1.5 Arial, sans-serif;
     color: #315a78;
+    text-align: justify;
 }
 .ssg-report footer {
     text-align: center;
@@ -297,19 +298,16 @@
 #introduction h2 {
     font-family: Cambria, Georgia, serif !important;
 }
-
 #introduction p {
     font-size: 16px !important;
     line-height: 1.8;
     text-align: justify;
 }
-
 #introduction h2 {
     font-size: 20px !important;
     font-weight: bold;
 }
 </style>
-
 
 <div class="ssg-report">
     <main class="paper">
@@ -356,38 +354,42 @@
 
             <a href="?month={{ selected_month_number }}&year={{ selected_year }}&format=pdf"
                 class="btn-report btn-print">
-                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                <i class="fa-solid fa-file-pdf"></i> Download PDF
             </a>
         </div>
 
         <div class="report-note">
             <section id="introduction">
-                <h2> INTRODUCTION </h2>
-
-                <p> This financial report provides an overview of the financial performance and activities of Smart Saving Group for the reporting period. 
-                    It summarizes members’ savings contributions, loans issued, loan repayments, penalties collected, outstanding balances, and the group’s overall financial position. 
-                    The report aims to promote transparency, accountability, and informed decision-making among group members and the management committee. It also serves as a reference 
-                    for monitoring the group’s financial progress and ensuring compliance with its established financial policies and procedures.
+                <h2>INTRODUCTION</h2>
+                <p>
+                    This financial report provides an overview of the financial performance and activities of Smart Saving Group for the reporting period.
+                    It summarizes members’ savings contributions, loans issued, loan repayments, penalties collected, outstanding balances, and the group’s overall financial position.
+                    The report aims to promote transparency, accountability, and informed decision-making among group members and the management committee.
+                    It also serves as a reference for monitoring the group’s financial progress and ensuring compliance with its established financial policies and procedures.
                 </p>
-            </section>    
+            </section>
         </div>
 
         <!-- 1. FINANCIAL SUMMARY -->
         <section>
             <h2 class="section-title"><span class="num">1.</span>Financial Summary</h2>
+
             <div class="summary-grid">
+
                 <div class="summary-panel">
-                    <div class="metric"><strong>INITIAL BALANCE:</strong><span class="value">{{ initial_balance|floatformat:0|intcomma }} Frw</span></div>
-                    <div class="metric"><strong>TOTAL CONTRIBUTIONS:</strong><span class="value">{{ total_contributions|default:0|floatformat:0|intcomma }} Frw</span></div>
-                    <div class="metric"><strong>PENALTIES INCURRED THIS MONTH:</strong><span class="value">{{ total_penalties_incurred|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>INITIAL / OPENING BALANCE:</strong><span class="value">{{ initial_balance|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>CONTRIBUTIONS RECEIVED:</strong><span class="value">{{ contributions_received|default:0|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>TOTAL ACCUMULATED CONTRIBUTIONS:</strong><span class="value">{{ total_accumulated_contributions|default:0|floatformat:0|intcomma }} Frw</span></div>
                     <div class="metric"><strong>LOAN REPAYMENTS:</strong><span class="value">{{ total_repayments|default:0|floatformat:0|intcomma }} Frw</span></div>
                 </div>
+
                 <div class="summary-panel">
                     <div class="metric"><strong>LOANS DISBURSED:</strong><span class="value">{{ total_loans_disbursed|default:0|floatformat:0|intcomma }} Frw</span></div>
-                    <div class="metric"><strong>OLD PENALTIES COLLECTED THIS MONTH:</strong><span class="value">{{ old_penalties_collected|floatformat:0|intcomma }} Frw</span></div>
-                    <div class="metric"><strong>UNPAID PENALTIES:</strong><span class="value">{{ unpaid_penalties|floatformat:0|intcomma }} Frw</span></div>
-                    <div class="metric"><strong>CLOSING CASH / BANK BALANCE:</strong><span class="value">{{ closing_balance|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>INTEREST INCOME:</strong><span class="value">{{ interest_income|default:0|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>TOTAL ACCUMULATED INTERESTS:</strong><span class="value">{{ total_accumulated_interests|default:0|floatformat:0|intcomma }} Frw</span></div>
+                    <div class="metric"><strong>CLOSING / ENDING BALANCE:</strong><span class="value">{{ closing_balance|floatformat:0|intcomma }} Frw</span></div>
                 </div>
+
             </div>
         </section>
 
@@ -398,14 +400,14 @@
                 <table>
                     <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
                     <tbody>
-                        <tr><td>Opening balance from previous month</td><td>{{ initial_balance|floatformat:0|intcomma }} </td></tr>
+                        <tr><td>Opening balance from previous month</td><td>{{ initial_balance|floatformat:0|intcomma }}</td></tr>
                         <tr><td>Member contributions received</td><td>{{ total_contributions|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr><td>Loan repayments received</td><td>{{ total_repayments|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr><td>Penalties received</td><td>{{ total_penalty_payments|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr class="total"><td>TOTAL MONTHLY INFLOWS</td><td>{{ total_monthly_inflows|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr><td>New loans disbursed</td><td>({{ total_loans_disbursed|default:0|floatformat:0|intcomma }})</td></tr>
-                        <tr><td>Expenses</td><td class="not-calculated">0 </td></tr>
-                        <tr class="total"><td>MONTHLY NET CASH FLOW*</td><td>{{ monthly_net_cash_flow|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Expenses</td><td>0</td></tr>
+                        <tr class="total"><td>MONTHLY NET CASH FLOW</td><td>{{ monthly_net_cash_flow|default:0|floatformat:0|intcomma }}</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -417,9 +419,9 @@
                     <tbody>
                         <tr><td>Total registered members</td><td>{{ total_members|default:0|intcomma }}</td></tr>
                         <tr><td>Active members</td><td>{{ active_members|default:0|intcomma }}</td></tr>
-                        <tr><td>Members who have not paid</td><td class="text-end">{{ members_who_have_not_paid }}</td></tr>
-                        <tr><td>Outstanding old contributions </td><td>{{ outstanding_old_contributions|floatformat:0|intcomma }} Frw</td></tr>
-                        <tr><td>Expected contributions (This month)</td><td>{{ expected_contributions|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr><td>Members who have not paid</td><td>{{ members_who_have_not_paid|default:0|intcomma }}</td></tr>
+                        <tr><td>Outstanding old contributions</td><td>{{ outstanding_old_contributions|default:0|floatformat:0|intcomma }} Frw</td></tr>
+                        <tr><td>Expected contributions (This month)</td><td>{{ expected_contributions|default:0|floatformat:0|intcomma }} Frw</td></tr>
                         <tr class="total"><td>Total contributions due</td><td>{{ total_contributions_due|floatformat:0|intcomma }} Frw</td></tr>
                         <tr><td>Contributions received</td><td>{{ total_contributions|default:0|floatformat:0|intcomma }} Frw</td></tr>
                         <tr class="total"><td>Outstanding contributions</td><td>{{ outstanding_contributions|floatformat:0|intcomma }} Frw</td></tr>
@@ -435,13 +437,13 @@
                 <table>
                     <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
                     <tbody>
-                        <tr><td>Opening loan balance</td><td>{{ opening_loan_balance|floatformat:0|intcomma }}</td></tr>
-                        <tr><td>New loans disbursed this month</td><td>{{ new_loans_disbursed|floatformat:0|intcomma }}</td></tr>
-                        <tr><td>Loan principal repaid</td><td>{{ total_repayments|default:0|floatformat:0|intcomma }}</td></tr>
-                        <tr class="total"><td>Current outstanding loan balance</td><td>{{ current_outstanding_loan_balance|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Opening loan balance</td><td>{{ opening_loan_balance|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>New loans disbursed this month (Principal)</td><td>{{ total_loans_disbursed|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Loan repayments received this month</td><td>{{ total_repayments|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Number of active loans</td><td>{{ active_loan_count|default:0 }}</td></tr>
+                        <tr class="total"><td>Current outstanding loan balance (With Interests)</td><td>{{ current_outstanding_loan_balance|default:0|floatformat:0|intcomma }} Frw</td></tr>
                     </tbody>
                 </table>
-                
             </section>
 
             <section class="section">
@@ -449,11 +451,11 @@
                 <table>
                     <thead><tr><th>Description</th><th>Amount (Frw)</th></tr></thead>
                     <tbody>
-                        <tr><td>Old unpaid penalties</td><td class="text-end">{{ old_unpaid_penalties|floatformat:0|intcomma }}</td></tr>
-                        <tr><td>Penalties assessed during the month</td><td class="text-end">{{ penalties_assessed_amount|floatformat:0|intcomma }}</td></tr>
-                        <tr class="total"><td>Total penalties due</td><td class="text-end">{{ total_penalties_due|floatformat:0|intcomma }}</td></tr>
-                        <tr><td>Penalties collected</td><td class="text-end">{{ penalties_collected|floatformat:0|intcomma }}</td></tr>
-                        <tr class="total"><td>Outstanding penalties</td><td class="text-end">{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Old unpaid penalties</td><td>{{ old_unpaid_penalties|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Penalties assessed during the month</td><td>{{ penalties_assessed_amount|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>Total penalties due</td><td>{{ total_penalties_due|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Penalties collected</td><td>{{ penalties_collected|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>Outstanding penalties</td><td>{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -467,10 +469,10 @@
                     <thead><tr><th>Item</th><th>Amount (Frw)</th></tr></thead>
                     <tbody>
                         <tr><td>Closing cash and bank balance</td><td>{{ closing_balance|floatformat:0|intcomma }}</td></tr>
-                        <tr><td> Current outstanding loans (+ Interests)</td><td>{{ outstanding_loans|default:0|floatformat:0|intcomma }}</td></tr>
-                        <tr><td> Current outstanding Contributions</td><td>{{ outstanding_contributions|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Current outstanding loans (With Interests)</td><td>{{ current_outstanding_loan_balance|default:0|floatformat:0|intcomma }}</td></tr>
+                        <tr><td>Current outstanding contributions</td><td>{{ outstanding_contributions|default:0|floatformat:0|intcomma }}</td></tr>
                         <tr><td>Outstanding penalties</td><td>{{ outstanding_penalties|floatformat:0|intcomma }}</td></tr>
-                        <tr class="total"><td>NET FINANCIAL POSITION</td><td>{{ net_financial_position|floatformat:0|intcomma }}</td></tr>
+                        <tr class="total"><td>NET FINANCIAL POSITION</td><td>{{ net_financial_position|default:0|floatformat:0|intcomma }}</td></tr>
                     </tbody>
                 </table>
             </section>
@@ -491,9 +493,11 @@
         </div>
 
         <div class="report-note">
-            <strong>* Note:</strong> This report reflects the financial records available and verified as of the reporting date. 
-            The complete monthly report is available from the 6th day of the following month to allow sufficient time for verification and reconciliation of all financial transactions. 
-            Any discrepancies should be reported to the responsible committee for review and correction.
+            <strong>Note:</strong> This report provides an overview of the financial position and activities of Smart Saving Group for 
+        the reporting month indicated above. The complete monthly report becomes available on the 6th day of each month (for example, 
+        the complete report for October becomes available on 6th November). Since this report is system-generated, you are encouraged 
+        to carefully review and verify the information presented. If any errors, discrepancies, or inaccuracies are identified, you 
+        should be promptly reported to the management committee for review, necessary action, and correction.
         </div>
 
         <footer>
